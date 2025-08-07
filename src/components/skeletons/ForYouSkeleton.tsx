@@ -22,7 +22,7 @@ const ForYouSkeleton = () => {
         className="relative w-full overflow-hidden"
         style={{ marginTop: offset }}
       >
-        <div className="relative w-full bg-gray-200 animate-pulse aspect-[16/5] mb-1">
+        <div className="relative w-full bg-gray-200 animate-pulse aspect-[16/9] mb-1">
           <div className="absolute inset-0 flex items-center justify-center">
             <Skeleton className="w-24 h-6" />
           </div>
