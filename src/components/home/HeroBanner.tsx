@@ -229,7 +229,10 @@ export default function HeroBanner() {
 
   if (isLoading) {
     return (
-      <div className="relative w-full bg-gray-200 animate-pulse aspect-[16/5]">
+      <div 
+        className="relative w-full bg-gray-200 animate-pulse h-[60vh] overflow-hidden"
+        style={{ marginTop: offset }}
+      >
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-gray-400">Loading banners...</span>
         </div>
