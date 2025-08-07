@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const ForYouSkeleton = () => {
+  const [offset, setOffset] = useState<number>(0);
+
+  // Dynamically measure header height
+  useEffect(() => {
+    function updateOffset() {
+      const header = document.getElementById("ali-header");
+      setOffset(header ? header.offsetHeight : 0);
+    }
+    updateOffset();
+    window.addEventListener('resize', updateOffset);
+    return () => window.removeEventListener('resize', updateOffset);
+  }, []);
+
   return (
     <div className="pb-16 min-h-screen">
       {/* Hero Banner Skeleton */}
-      <div className="relative w-full bg-gray-200 animate-pulse aspect-[16/5] mb-1">
+      <div 
+        className="relative w-full bg-gray-200 animate-pulse h-[60vh] mb-1 overflow-hidden"
+        style={{ marginTop: offset }}
+      >
         <div className="absolute inset-0 flex items-center justify-center">
           <Skeleton className="w-24 h-6" />
         </div>
