@@ -230,7 +230,7 @@ export default function HeroBanner() {
   if (isLoading) {
     return (
       <div 
-        className="relative w-full bg-gray-200 animate-pulse h-[60vh] overflow-hidden"
+        className="relative w-full bg-gray-200 animate-pulse aspect-[16/9] overflow-hidden"
         style={{ marginTop: offset }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
