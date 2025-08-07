@@ -17,12 +17,12 @@ const ForYouSkeleton = () => {
 
   return (
     <div className="pb-16 min-h-screen">
-      {/* Hero Banner Skeleton - matches 16:9 aspect ratio */}
+      {/* Hero Banner Skeleton - matches BannerSlides.tsx h-[60vh] */}
       <div 
         className="relative w-full overflow-hidden"
         style={{ marginTop: offset }}
       >
-        <div className="relative w-full bg-gray-200 animate-pulse aspect-[16/9] mb-1">
+        <div className="relative w-full bg-gray-200 animate-pulse h-[60vh] mb-1">
           <div className="absolute inset-0 flex items-center justify-center">
             <Skeleton className="w-24 h-6" />
           </div>

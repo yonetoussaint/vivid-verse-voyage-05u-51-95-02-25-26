@@ -133,7 +133,7 @@ export default function TransferHeroBanner() {
   if (isLoading) {
     return (
       <div className="px-4" style={{ marginTop: offset }}>
-        <div className="relative w-full bg-gray-200 animate-pulse aspect-[16/9] rounded-3xl shadow-lg overflow-hidden">
+        <div className="relative w-full bg-gray-200 animate-pulse h-[60vh] rounded-3xl shadow-lg overflow-hidden">
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-gray-400">Loading banners...</span>
           </div>

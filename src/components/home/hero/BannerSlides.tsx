@@ -34,7 +34,7 @@ export default function BannerSlides({
               alt={banner.alt || "Banner image"}
               type={banner.type} // "image" or "video"
               isActive={isActive}
-              className="w-full aspect-[16/9]"
+              className="w-full h-[60vh]"
               onVideoDurationChange={(duration) => onVideoDurationChange?.(index, duration)}
             />
           </div>
