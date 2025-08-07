@@ -17,19 +17,21 @@ const ForYouSkeleton = () => {
 
   return (
     <div className="pb-16 min-h-screen">
-      {/* Hero Banner Skeleton */}
+      {/* Hero Banner Skeleton - matches BannerSlides.tsx h-[60vh] */}
       <div 
-        className="relative w-full bg-gray-200 animate-pulse h-[60vh] mb-1 overflow-hidden"
+        className="relative w-full overflow-hidden"
         style={{ marginTop: offset }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Skeleton className="w-24 h-6" />
-        </div>
-        {/* Banner controls */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-          {Array(3).fill(0).map((_, i) => (
-            <Skeleton key={i} className="w-2 h-2 rounded-full" />
-          ))}
+        <div className="relative w-full bg-gray-200 animate-pulse h-[60vh] mb-1">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Skeleton className="w-24 h-6" />
+          </div>
+          {/* Banner controls */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            {Array(3).fill(0).map((_, i) => (
+              <Skeleton key={i} className="w-2 h-2 rounded-full" />
+            ))}
+          </div>
         </div>
       </div>
 
