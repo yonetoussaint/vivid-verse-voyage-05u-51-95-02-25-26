@@ -129,70 +129,87 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
     }
   };
 
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0 || !product) return;
+const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const files = event.target.files;
+  if (!files || files.length === 0 || !product) return;
 
-    setUploadingVideos(true);
+  setUploadingVideos(true);
 
-    try {
-      for (const file of Array.from(files)) {
-        // Validate video file type
-        if (!file.type.startsWith('video/')) {
-          toast.error(`${file.name} is not a valid video file`);
-          continue;
-        }
-
-        // Create unique filename
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${product.id}/videos/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('product-videos')
-          .upload(fileName, file, {
-            contentType: file.type,
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error('Video upload error:', uploadError);
-          toast.error(`Failed to upload ${file.name}`);
-          continue;
-        }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('product-videos')
-          .getPublicUrl(fileName);
-
-        // Save video record to database
-        const { error: dbError } = await supabase
-          .from('product_videos')
-          .insert({
-            product_id: product.id,
-            video_url: urlData.publicUrl,
-            title: `${product.name} video`,
-            description: `Video for ${product.name}`
-          });
-
-        if (dbError) {
-          console.error('Database error:', dbError);
-          toast.error(`Failed to save ${file.name} to database`);
-        } else {
-          toast.success(`${file.name} uploaded successfully`);
-        }
+  try {
+    for (const file of Array.from(files)) {
+      // Validate video file type
+      if (!file.type.startsWith('video/')) {
+        toast.error(`${file.name} is not a valid video file`);
+        continue;
       }
 
-      onSuccess(); // Refresh the product data
-    } catch (error) {
-      console.error('Error uploading videos:', error);
-      toast.error('Failed to upload videos');
-    } finally {
-      setUploadingVideos(false);
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${product.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      // First ensure the product folder exists
+      const { error: folderError } = await supabase.storage
+        .from('product-videos')
+        .upload(`${product.id}/.placeholder`, new Blob(), {
+          upsert: true
+        });
+
+      if (folderError && folderError.message !== 'The resource already exists') {
+        console.error('Folder creation error:', folderError);
+        throw folderError;
+      }
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('product-videos')
+        .upload(fileName, file, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Video upload error:', uploadError);
+        toast.error(`Failed to upload ${file.name}: ${uploadError.message}`);
+        continue;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('product-videos')
+        .getPublicUrl(fileName);
+
+      // Save video record to database
+      const { error: dbError } = await supabase
+        .from('product_videos')
+        .insert({
+          product_id: product.id,
+          video_url: urlData.publicUrl,
+          title: `${product.name} video`,
+          description: `Video for ${product.name}`
+        });
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        // Attempt to delete the uploaded video if DB insert fails
+        await supabase.storage
+          .from('product-videos')
+          .remove([fileName]);
+          
+        toast.error(`Failed to save ${file.name} to database: ${dbError.message}`);
+      } else {
+        toast.success(`${file.name} uploaded successfully`);
+      }
     }
-  };
+
+    onSuccess(); // Refresh the product data
+  } catch (error) {
+    console.error('Error uploading videos:', error);
+    toast.error(`Failed to upload videos: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  } finally {
+    setUploadingVideos(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
