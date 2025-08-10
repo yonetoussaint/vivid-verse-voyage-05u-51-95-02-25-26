@@ -1,4 +1,4 @@
-// --- Updated Product type definition ---
+// --- Product type definition ---
 export interface Product {
   id: string;
   name: string;
@@ -12,7 +12,7 @@ export interface Product {
     src: string;
     alt?: string;
   }[];
-  product_videos?: {  // Added this field
+  product_videos?: {
     id: string;
     video_url: string;
     title?: string;
@@ -46,7 +46,7 @@ export interface Product {
   };
 }
 
-// --- Updated fetchAllProducts to include videos ---
+// --- Fetch all products from Supabase ---
 export async function fetchAllProducts(): Promise<Product[]> {
   const { supabase } = await import('./client');
 
@@ -59,7 +59,7 @@ export async function fetchAllProducts(): Promise<Product[]> {
         src,
         alt
       ),
-      product_videos (  // Added this relation
+      product_videos (
         id,
         video_url,
         title,
@@ -88,7 +88,62 @@ export async function fetchAllProducts(): Promise<Product[]> {
   return data || [];
 }
 
-// --- Updated fetchProductById to include videos ---
+// --- Fetch products for a specific user ---
+export async function fetchUserProducts(userId: string): Promise<Product[]> {
+  // For now, return all products since we don't have user-specific products
+  return fetchAllProducts();
+}
+
+// --- Create a product (mock version) ---
+export async function createProduct(productData: Partial<Product>): Promise<Product> {
+  // In a real app, send productData to supabase, but here we return a new product
+  return {
+    id: Math.random().toString(36).substring(2, 9),
+    name: productData.name || "New Product",
+    description: productData.description || "",
+    price: productData.price ?? 0,
+    discount_price: productData.discount_price ?? null,
+    category: productData.category || "",
+    imageUrl: "",
+    product_images: [],
+    rating: 0,
+    reviewCount: 0,
+    inventory: 0,
+    created_at: new Date().toISOString(),
+  };
+}
+
+// --- Update a product in Supabase ---
+export async function updateProduct(productId: string, productData: Partial<Product>): Promise<Product> {
+  const { supabase } = await import('./client');
+
+  console.log('📦 updateProduct called with:', { productId, productData });
+
+  // Handle tags array properly for PostgreSQL
+  const updatePayload = { ...productData };
+  if (productData.tags !== undefined) {
+    // Ensure tags is properly formatted as an array for PostgreSQL
+    updatePayload.tags = Array.isArray(productData.tags) ? productData.tags : [];
+  }
+
+  const { data, error } = await supabase
+    .from('products')
+    .update(updatePayload)
+    .eq('id', productId)
+    .select('*')
+    .single();
+
+  console.log('📦 Supabase response:', { data, error });
+
+  if (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+// --- Fetch single product by ID ---
 export async function fetchProductById(productId: string): Promise<Product> {
   const { supabase } = await import('./client');
 
@@ -101,7 +156,7 @@ export async function fetchProductById(productId: string): Promise<Product> {
         src,
         alt
       ),
-      product_videos (  // Added this relation
+      product_videos (
         id,
         video_url,
         title,
@@ -135,7 +190,33 @@ export async function fetchProductById(productId: string): Promise<Product> {
   return data;
 }
 
-// --- Updated fetchFlashDeals to include videos ---
+// --- Track product view ---
+export async function trackProductView(productId: string): Promise<void> {
+  const { supabase } = await import('./client');
+
+  const { error } = await supabase.rpc('increment_product_views', {
+    product_id: productId
+  });
+
+  if (error) {
+    console.error('Error tracking product view:', error);
+  }
+}
+
+// --- Track product save ---
+export async function trackProductSave(productId: string): Promise<void> {
+  const { supabase } = await import('./client');
+
+  const { error } = await supabase.rpc('increment_product_saves', {
+    product_id: productId
+  });
+
+  if (error) {
+    console.error('Error tracking product save:', error);
+  }
+}
+
+// --- Fetch current flash deals ---
 export async function fetchFlashDeals(category?: string): Promise<Product[]> {
   const { supabase } = await import('./client');
 
@@ -148,7 +229,7 @@ export async function fetchFlashDeals(category?: string): Promise<Product[]> {
         src,
         alt
       ),
-      product_videos (  // Added this relation
+      product_videos (
         id,
         video_url,
         title,
@@ -173,3 +254,15 @@ export async function fetchFlashDeals(category?: string): Promise<Product[]> {
 
   return data || [];
 }
+
+// Explicitly export all functions at the end for clarity
+export default {
+  fetchAllProducts,
+  fetchUserProducts,
+  createProduct,
+  updateProduct,
+  fetchProductById,
+  trackProductView,
+  trackProductSave,
+  fetchFlashDeals
+};
