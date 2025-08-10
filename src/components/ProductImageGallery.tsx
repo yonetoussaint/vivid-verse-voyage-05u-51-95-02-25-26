@@ -17,8 +17,14 @@ import InfoBand from "@/components/product/InfoBand";
 
 interface ProductImageGalleryProps {
   images: string[];
-  videoIndices?: number[];
+  videos?: {
+    id: string;
+    video_url: string;
+    title?: string;
+    description?: string;
+  }[];
 }
+
 
 interface TouchPosition {
   x: number;
