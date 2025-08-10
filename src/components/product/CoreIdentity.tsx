@@ -284,7 +284,46 @@ const ExpandableCard = () => {
         </div>
       )}
 
-      {/* Payment Methods */}
+      {/* Price Display when no description */}
+      {!description && (
+        <div className="flex items-center space-x-2 mt-2">
+          <div className="flex items-center">
+            <button
+              onClick={toggleCurrency}
+              className="flex items-center bg-white border border-gray-300 rounded px-2 h-6 hover:bg-gray-50 transition-colors duration-200"
+            >
+              <span className="text-gray-600 text-sm font-bold flex items-center">
+                <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">{currencyFlags[currentCurrency]}</span>
+                {currencies[currentCurrency]}
+              </span>
+              <span className="ml-1 text-gray-600 hover:text-gray-800 transition-colors duration-200">
+                <ChevronDown className="w-4 h-4 font-black stroke-2" />
+              </span>
+              <span className="text-orange-500 text-sm font-black ml-2 h-6 flex items-center">
+                {convertPrice(product?.discount_price || product?.price || 104.99)}
+              </span>
+            </button>
+          </div>
+          <div className="flex items-center">
+            <div className="relative h-5 overflow-hidden">
+              <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-5' : 'translate-y-0'}`}>
+                <div className="h-5 flex items-center">
+                  <span className="text-gray-400 text-sm line-through">
+                    {convertPrice(product?.price || 149.99)}
+                  </span>
+                </div>
+                <div className="h-5 flex items-center">
+                  <span className="text-red-500 text-sm font-bold">
+                    -20% OFF
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Methods (now only appears once at the bottom) */}
       <div className="mt-3">
         <div className="flex items-center justify-start">
           <div className="flex items-center flex-wrap gap-2">
@@ -296,60 +335,6 @@ const ExpandableCard = () => {
           </div>
         </div>
       </div>
-
-      {/* Price Display when no description */}
-      {!description && (
-        <>
-          <div className="flex items-center space-x-2 mt-2">
-            <div className="flex items-center">
-              <button
-                onClick={toggleCurrency}
-                className="flex items-center bg-white border border-gray-300 rounded px-2 h-6 hover:bg-gray-50 transition-colors duration-200"
-              >
-                <span className="text-gray-600 text-sm font-bold flex items-center">
-                  <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">{currencyFlags[currentCurrency]}</span>
-                  {currencies[currentCurrency]}
-                </span>
-                <span className="ml-1 text-gray-600 hover:text-gray-800 transition-colors duration-200">
-                  <ChevronDown className="w-4 h-4 font-black stroke-2" />
-                </span>
-                <span className="text-orange-500 text-sm font-black ml-2 h-6 flex items-center">
-                  {convertPrice(product?.discount_price || product?.price || 104.99)}
-                </span>
-              </button>
-            </div>
-            <div className="flex items-center">
-              <div className="relative h-5 overflow-hidden">
-                <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-5' : 'translate-y-0'}`}>
-                  <div className="h-5 flex items-center">
-                    <span className="text-gray-400 text-sm line-through">
-                      {convertPrice(product?.price || 149.99)}
-                    </span>
-                  </div>
-                  <div className="h-5 flex items-center">
-                    <span className="text-red-500 text-sm font-bold">
-                      -20% OFF
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment Methods */}
-          <div className="mt-3">
-            <div className="flex items-center justify-start">
-              <div className="flex items-center flex-wrap gap-2">
-                {getPaymentMethods(currentCurrency).map((payment, index) => (
-                  <div key={index} className={`${payment.color} text-white text-xs px-2 py-1 rounded font-bold`}>
-                    {payment.name}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 };
