@@ -8,6 +8,11 @@ interface GalleryThumbnailsProps {
   onThumbnailClick: (index: number) => void;
   isPlaying?: boolean;
   videoIndices?: number[];
+  galleryItems?: Array<{
+    type: 'image' | 'video';
+    src: string;
+    videoData?: any;
+  }>;
 }
 
 export const GalleryThumbnails = ({
@@ -15,13 +20,15 @@ export const GalleryThumbnails = ({
   currentIndex,
   onThumbnailClick,
   isPlaying = false,
-  videoIndices = []
+  videoIndices = [],
+  galleryItems = []
 }: GalleryThumbnailsProps) => {
   return (
     <div className="flex items-center gap-1.5 px-1.5 pt-1.5 pb-1.5 overflow-x-auto w-full scrollbar-hide">
-      {images.slice(0, Math.min(7, images.length)).map((img, index) => {
+      {images.slice(0, Math.min(7, images.length)).map((src, index) => {
         const isVideo = videoIndices.includes(index);
-        
+        const galleryItem = galleryItems[index];
+
         return (
           <div
             key={index}
@@ -34,12 +41,14 @@ export const GalleryThumbnails = ({
             )}
             onClick={() => onThumbnailClick(index)}
           >
-            {isVideo ? (
+            {isVideo || galleryItem?.type === 'video' ? (
               <div className="relative w-full h-full">
-                <img 
-                  src={img} 
-                  alt="Video thumbnail"
+                <video 
+                  src={src}
                   className="w-full h-full object-cover"
+                  muted
+                  preload="metadata"
+                  poster={galleryItem?.videoData?.thumbnail_url}
                 />
                 <div className={cn(
                   "absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300",
@@ -47,10 +56,14 @@ export const GalleryThumbnails = ({
                 )}>
                   <Play className="h-4 w-4 text-white" />
                 </div>
+                {/* Video indicator badge */}
+                <div className="absolute top-0.5 left-0.5 text-[8px] bg-red-600 text-white px-1 rounded text-center font-semibold">
+                  VIDEO
+                </div>
               </div>
             ) : (
               <img 
-                src={img} 
+                src={src} 
                 alt={`Thumbnail ${index}`} 
                 className="w-full h-full object-cover"
               />
