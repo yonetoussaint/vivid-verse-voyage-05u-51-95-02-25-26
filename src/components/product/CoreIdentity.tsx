@@ -284,41 +284,32 @@ const ExpandableCard = () => {
         </div>
       )}
 
-      {!description && (
-  <div className="flex items-baseline mt-2 gap-3">
-    {/* Currency and Price */}
+     {!description && (
+  <div className="flex items-baseline gap-3 mt-2">
+    {/* Main Price */}
     <button 
       onClick={toggleCurrency}
       className="flex items-baseline hover:opacity-80 transition-opacity"
     >
-      <span className="flex items-center text-gray-600 text-sm font-bold">
-        <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">
+      <span className="flex items-center text-gray-600 text-lg font-bold">
+        <span className="mr-1 rounded-full overflow-hidden w-5 h-5 flex items-center justify-center text-xs">
           {currencyFlags[currentCurrency]}
         </span>
         {currencies[currentCurrency]}
       </span>
-      <span className="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-gray-100">
+      <span className="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100">
         <ChevronDown className="w-3 h-3 font-black stroke-2 text-gray-600" />
       </span>
-      <span className="text-orange-500 text-lg font-black ml-2">
+      <span className="text-orange-500 text-xl font-black ml-2">
         {convertPrice(product?.discount_price || product?.price || 104.99)}
       </span>
     </button>
 
-    {/* Discount Price */}
-    <div className="relative h-6 overflow-hidden">
-      <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-6' : 'translate-y-0'}`}>
-        <div className="h-6 flex items-center">
-          <span className="text-gray-400 text-sm line-through">
-            {convertPrice(product?.price || 149.99)}
-          </span>
-        </div>
-        <div className="h-6 flex items-center">
-          <span className="text-red-500 text-sm font-bold">
-            -20% OFF
-          </span>
-        </div>
-      </div>
+    {/* Original Price */}
+    <div className="flex items-center">
+      <span className="text-gray-400 text-lg line-through">
+        {currencies[currentCurrency]}{convertPrice(product?.price || 149.99)}
+      </span>
     </div>
   </div>
 )}
