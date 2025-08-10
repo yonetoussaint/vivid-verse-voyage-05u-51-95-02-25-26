@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus, Upload, Edit, Save, Loader2 } from 'lucide-react';
+import { X, Plus, Upload, Edit, Save, Loader2, Video, Play } from 'lucide-react';
 import { Product, updateProduct } from '@/integrations/supabase/products';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -35,6 +35,7 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
   const [newTag, setNewTag] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
 
   useEffect(() => {
     if (product && open) {
@@ -79,7 +80,7 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
     if (!files || files.length === 0 || !product) return;
 
     setUploadingImages(true);
-    
+
     try {
       for (const file of Array.from(files)) {
         // Create unique filename
@@ -118,13 +119,78 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
           toast.success(`${file.name} uploaded successfully`);
         }
       }
-      
+
       onSuccess(); // Refresh the product data
     } catch (error) {
       console.error('Error uploading images:', error);
       toast.error('Failed to upload images');
     } finally {
       setUploadingImages(false);
+    }
+  };
+
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !product) return;
+
+    setUploadingVideos(true);
+
+    try {
+      for (const file of Array.from(files)) {
+        // Validate video file type
+        if (!file.type.startsWith('video/')) {
+          toast.error(`${file.name} is not a valid video file`);
+          continue;
+        }
+
+        // Create unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${product.id}/videos/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('product-videos')
+          .upload(fileName, file, {
+            contentType: file.type,
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Video upload error:', uploadError);
+          toast.error(`Failed to upload ${file.name}`);
+          continue;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('product-videos')
+          .getPublicUrl(fileName);
+
+        // Save video record to database
+        const { error: dbError } = await supabase
+          .from('product_videos')
+          .insert({
+            product_id: product.id,
+            video_url: urlData.publicUrl,
+            title: `${product.name} video`,
+            description: `Video for ${product.name}`
+          });
+
+        if (dbError) {
+          console.error('Database error:', dbError);
+          toast.error(`Failed to save ${file.name} to database`);
+        } else {
+          toast.success(`${file.name} uploaded successfully`);
+        }
+      }
+
+      onSuccess(); // Refresh the product data
+    } catch (error) {
+      console.error('Error uploading videos:', error);
+      toast.error('Failed to upload videos');
+    } finally {
+      setUploadingVideos(false);
     }
   };
 
@@ -146,7 +212,7 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
       };
 
       await updateProduct(product.id, updateData);
-      
+
       toast.success('Product updated successfully');
       onSuccess();
       onOpenChange(false);
@@ -161,6 +227,11 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
   const getProductImageUrl = (imagePath?: string): string => {
     if (!imagePath) return "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=300&h=300&fit=crop";
     return imagePath;
+  };
+
+  const getProductVideoUrl = (videoPath?: string): string => {
+    if (!videoPath) return "";
+    return videoPath;
   };
 
   if (!product) return null;
@@ -188,6 +259,40 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
                       alt={image.alt || 'Product image'}
                       className="w-full h-full object-cover"
                     />
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        try {
+                          // Delete from storage
+                          const path = image.src.split('/').pop();
+                          if (path) {
+                            const { error: storageError } = await supabase.storage
+                              .from('product-images')
+                              .remove([path]);
+
+                            if (storageError) throw storageError;
+                          }
+
+                          // Delete from database
+                          const { error: dbError } = await supabase
+                            .from('product_images')
+                            .delete()
+                            .eq('id', image.id);
+
+                          if (dbError) throw dbError;
+
+                          toast.success('Image deleted successfully');
+                          onSuccess();
+                        } catch (error) {
+                          console.error('Error deleting image:', error);
+                          toast.error('Failed to delete image');
+                        }
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -197,7 +302,7 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
                 <p className="text-sm text-gray-500">No images uploaded yet</p>
               </div>
             )}
-            
+
             <div className="flex items-center gap-2">
               <Input
                 type="file"
@@ -225,6 +330,94 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
             </div>
           </div>
 
+          {/* Product Videos */}
+          <div className="space-y-3">
+            <Label>Product Videos</Label>
+            {product.product_videos && product.product_videos.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {product.product_videos.map((video) => (
+                  <div key={video.id} className="relative aspect-video rounded-lg overflow-hidden border">
+                    <video
+                      src={getProductVideoUrl(video.video_url)}
+                      className="w-full h-full object-cover"
+                      muted
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <Play className="w-6 h-6 text-white" />
+                    </div>
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        try {
+                          // Delete from storage
+                          const path = video.video_url.split('/').pop();
+                          if (path) {
+                            const { error: storageError } = await supabase.storage
+                              .from('product-videos')
+                              .remove([path]);
+
+                            if (storageError) throw storageError;
+                          }
+
+                          // Delete from database
+                          const { error: dbError } = await supabase
+                            .from('product_videos')
+                            .delete()
+                            .eq('id', video.id);
+
+                          if (dbError) throw dbError;
+
+                          toast.success('Video deleted successfully');
+                          onSuccess();
+                        } catch (error) {
+                          console.error('Error deleting video:', error);
+                          toast.error('Failed to delete video');
+                        }
+                      }}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Video className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No videos uploaded yet</p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Input
+                type="file"
+                multiple
+                accept="video/*"
+                onChange={handleVideoUpload}
+                className="hidden"
+                id="video-upload"
+                disabled={uploadingVideos}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('video-upload')?.click()}
+                disabled={uploadingVideos}
+                className="flex items-center gap-2"
+              >
+                {uploadingVideos ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                Add Videos
+              </Button>
+            </div>
+          </div>
+
+          {/* Rest of the form remains the same */}
           {/* Product Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Product Name</Label>
