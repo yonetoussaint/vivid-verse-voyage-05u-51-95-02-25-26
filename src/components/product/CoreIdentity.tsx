@@ -1,4 +1,4 @@
-,import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProduct } from '@/hooks/useProduct';
