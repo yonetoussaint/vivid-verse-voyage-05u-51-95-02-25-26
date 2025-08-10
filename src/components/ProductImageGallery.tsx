@@ -87,6 +87,17 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
 
+  // FIXED: Multiple video refs instead of single ref
+  const videoRefs = useRef<{[key: number]: HTMLVideoElement | null}>({});
+  
+  // FIXED: Video states per video index
+  const [isPlaying, setIsPlaying] = useState<{[key: number]: boolean}>({});
+  const [currentTime, setCurrentTime] = useState<{[key: number]: number}>({});
+  const [duration, setDuration] = useState<{[key: number]: number}>({});
+  const [bufferedTime, setBufferedTime] = useState<{[key: number]: number}>({});
+  const [videoError, setVideoError] = useState<{[key: number]: boolean}>({});
+  const [videoLoading, setVideoLoading] = useState<{[key: number]: boolean}>({});
+
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showCompareMode, setShowCompareMode] = useState(false);
   const [compareIndex, setCompareIndex] = useState(0);
@@ -106,18 +117,11 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
   const [openedThumbnailMenu, setOpenedThumbnailMenu] = useState<number | null>(null);
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [bufferedTime, setBufferedTime] = useState(0);
-
   // Get current item
   const currentItem = galleryItems[currentIndex];
   const isCurrentVideo = currentItem?.type === 'video';
 
-  // MOVED: Early return check AFTER all hooks are declared
+  // FIXED: Early return check AFTER all hooks are declared
   if (totalItems === 0) {
     return (
       <div className="flex flex-col bg-transparent">
@@ -151,34 +155,68 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     preloadItems();
   }, [galleryItems]);
 
+  // FIXED: Video event listeners for current video only
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (!currentVideoRef || !isCurrentVideo) return;
 
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
-    const onTimeUpdate = () => setCurrentTime(video.currentTime || 0);
-    const onLoadedMetadata = () => setDuration(video.duration || 0);
+    const onPlay = () => setIsPlaying(prev => ({ ...prev, [currentIndex]: true }));
+    const onPause = () => setIsPlaying(prev => ({ ...prev, [currentIndex]: false }));
+    const onTimeUpdate = () => setCurrentTime(prev => ({ ...prev, [currentIndex]: currentVideoRef.currentTime || 0 }));
+    const onLoadedMetadata = () => setDuration(prev => ({ ...prev, [currentIndex]: currentVideoRef.duration || 0 }));
     const onProgress = () => {
-      if (video.buffered.length > 0) {
-        setBufferedTime(video.buffered.end(video.buffered.length - 1));
+      if (currentVideoRef.buffered.length > 0) {
+        setBufferedTime(prev => ({ 
+          ...prev, 
+          [currentIndex]: currentVideoRef.buffered.end(currentVideoRef.buffered.length - 1) 
+        }));
       }
     };
+    const onLoadStart = () => setVideoLoading(prev => ({ ...prev, [currentIndex]: true }));
+    const onCanPlay = () => setVideoLoading(prev => ({ ...prev, [currentIndex]: false }));
+    const onError = () => {
+      setVideoError(prev => ({ ...prev, [currentIndex]: true }));
+      setVideoLoading(prev => ({ ...prev, [currentIndex]: false }));
+      console.error('Video failed to load:', currentItem.src);
+    };
 
-    video.addEventListener('play', onPlay);
-    video.addEventListener('pause', onPause);
-    video.addEventListener('timeupdate', onTimeUpdate);
-    video.addEventListener('loadedmetadata', onLoadedMetadata);
-    video.addEventListener('progress', onProgress);
+    currentVideoRef.addEventListener('play', onPlay);
+    currentVideoRef.addEventListener('pause', onPause);
+    currentVideoRef.addEventListener('timeupdate', onTimeUpdate);
+    currentVideoRef.addEventListener('loadedmetadata', onLoadedMetadata);
+    currentVideoRef.addEventListener('progress', onProgress);
+    currentVideoRef.addEventListener('loadstart', onLoadStart);
+    currentVideoRef.addEventListener('canplay', onCanPlay);
+    currentVideoRef.addEventListener('error', onError);
 
     return () => {
-      video.removeEventListener('play', onPlay);
-      video.removeEventListener('pause', onPause);
-      video.removeEventListener('timeupdate', onTimeUpdate);
-      video.removeEventListener('loadedmetadata', onLoadedMetadata);
-      video.removeEventListener('progress', onProgress);
+      currentVideoRef.removeEventListener('play', onPlay);
+      currentVideoRef.removeEventListener('pause', onPause);
+      currentVideoRef.removeEventListener('timeupdate', onTimeUpdate);
+      currentVideoRef.removeEventListener('loadedmetadata', onLoadedMetadata);
+      currentVideoRef.removeEventListener('progress', onProgress);
+      currentVideoRef.removeEventListener('loadstart', onLoadStart);
+      currentVideoRef.removeEventListener('canplay', onCanPlay);
+      currentVideoRef.removeEventListener('error', onError);
     };
-  }, [videoRef.current, currentIndex]);
+  }, [currentIndex, isCurrentVideo, currentItem]);
+
+  // FIXED: Reset states when switching items
+  useEffect(() => {
+    if (currentItem?.type !== 'video') {
+      setIsRotated(0);
+      setIsFlipped(false);
+      setZoomLevel(1);
+    }
+    
+    // Pause other videos when switching
+    Object.keys(videoRefs.current).forEach(key => {
+      const index = parseInt(key);
+      if (index !== currentIndex && videoRefs.current[index]) {
+        videoRefs.current[index]?.pause();
+      }
+    });
+  }, [currentIndex, currentItem]);
 
   const onApiChange = useCallback((api: CarouselApi | null) => {
     if (!api) return;
@@ -189,11 +227,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     api.on("select", () => {
       const index = api.selectedScrollSnap();
       setCurrentIndex(index);
-      setIsRotated(0);
-      setIsFlipped(false);
-      setZoomLevel(1);
-      setIsPlaying(false); // Reset video playing state
-
       setViewHistory(prev => [...prev, index]);
     });
   }, []);
@@ -272,62 +305,69 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     }
   }, [focusMode, toggleFullscreen, isCurrentVideo]);
 
-  // Video control handlers
+  // FIXED: Video control handlers using multiple refs
+  const toggleVideo = () => {
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
+      if (isPlaying[currentIndex]) {
+        currentVideoRef.pause();
+      } else {
+        currentVideoRef.play();
+      }
+    }
+  };
+
   const handleMuteToggle = () => {
-    if (videoRef.current) {
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
       const newMutedState = !isMuted;
-      videoRef.current.muted = newMutedState;
+      currentVideoRef.muted = newMutedState;
       setIsMuted(newMutedState);
     }
   };
 
   const handleVolumeChange = (newVolume: number) => {
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
+      currentVideoRef.volume = newVolume;
       setVolume(newVolume);
       setIsMuted(newVolume === 0);
     }
   };
 
   const handleSeek = (newTime: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
+      currentVideoRef.currentTime = newTime;
+      setCurrentTime(prev => ({ ...prev, [currentIndex]: newTime }));
     }
   };
 
   const handleSkipForward = () => {
-    if (videoRef.current) {
-      const newTime = Math.min((videoRef.current.currentTime || 0) + 10, duration);
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
+      const newTime = Math.min((currentVideoRef.currentTime || 0) + 10, duration[currentIndex] || 0);
+      currentVideoRef.currentTime = newTime;
+      setCurrentTime(prev => ({ ...prev, [currentIndex]: newTime }));
     }
   };
 
   const handleSkipBackward = () => {
-    if (videoRef.current) {
-      const newTime = Math.max((videoRef.current.currentTime || 0) - 10, 0);
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
+      const newTime = Math.max((currentVideoRef.currentTime || 0) - 10, 0);
+      currentVideoRef.currentTime = newTime;
+      setCurrentTime(prev => ({ ...prev, [currentIndex]: newTime }));
     }
   };
 
   const handleFullscreenVideo = () => {
-    if (videoRef.current) {
+    const currentVideoRef = videoRefs.current[currentIndex];
+    if (currentVideoRef) {
       if (document.fullscreenElement) {
         document.exitFullscreen();
       } else {
-        videoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const toggleVideo = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+        currentVideoRef.requestFullscreen();
       }
     }
   };
@@ -386,8 +426,13 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
                 <div className="flex h-full w-full items-center justify-center overflow-hidden relative">
                   {item.type === 'video' ? (
                     <div className="relative w-full h-full flex items-center justify-center">
+                      {/* FIXED: Better video element with proper ref management */}
                       <video
-                        ref={index === currentIndex ? videoRef : undefined}
+                        ref={(el) => {
+                          if (el) {
+                            videoRefs.current[index] = el;
+                          }
+                        }}
                         src={item.src}
                         className="w-full h-full object-contain cursor-pointer"
                         style={{ 
@@ -406,19 +451,49 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
                       >
                         Your browser does not support the video tag.
                       </video>
-                      {index === currentIndex && (
+
+                      {/* Error state */}
+                      {videoError[index] && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                          <div className="text-center">
+                            <span className="text-gray-500 block">Video failed to load</span>
+                            <button 
+                              onClick={() => {
+                                setVideoError(prev => ({ ...prev, [index]: false }));
+                                const videoEl = videoRefs.current[index];
+                                if (videoEl) {
+                                  videoEl.load();
+                                }
+                              }}
+                              className="text-blue-500 text-sm mt-2 hover:underline"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Loading state */}
+                      {videoLoading[index] && !videoError[index] && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                        </div>
+                      )}
+
+                      {/* Video controls for current video */}
+                      {index === currentIndex && !videoError[index] && (
                         <div className="absolute inset-0 pointer-events-none">
                           <div className="pointer-events-auto h-full w-full flex items-end">
                             <VideoControls
-                              isPlaying={isPlaying}
+                              isPlaying={isPlaying[currentIndex] || false}
                               isMuted={isMuted}
                               volume={volume}
                               onPlayPause={toggleVideo}
                               onMuteToggle={handleMuteToggle}
                               onVolumeChange={handleVolumeChange}
-                              currentTime={currentTime}
-                              duration={duration}
-                              bufferedTime={bufferedTime}
+                              currentTime={currentTime[currentIndex] || 0}
+                              duration={duration[currentIndex] || 0}
+                              bufferedTime={bufferedTime[currentIndex] || 0}
                               onSeek={handleSeek}
                               onSkipForward={handleSkipForward}
                               onSkipBackward={handleSkipBackward}
@@ -468,7 +543,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               autoScrollEnabled={autoScrollEnabled}
               focusMode={focusMode}
               isPlaying={false}
-              showControls={!(focusMode || (isCurrentVideo && isPlaying))}
+              showControls={!(focusMode || (isCurrentVideo && isPlaying[currentIndex]))}
               onRotate={handleRotate}
               onFlip={handleFlip}
               onToggleAutoScroll={toggleAutoScroll}
@@ -487,7 +562,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             images={galleryItems.map(item => item.src)}
             currentIndex={currentIndex}
             onThumbnailClick={handleThumbnailClick}
-            isPlaying={isPlaying}
+            isPlaying={isPlaying[currentIndex] || false}
             videoIndices={videoIndices}
             galleryItems={galleryItems}
           />
@@ -511,6 +586,9 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           {isCurrentVideo ? (
             <div className="relative w-full h-full flex items-center justify-center">
               <video
+                ref={(el) => {
+                  if (el) videoRefs.current[`fullscreen-${currentIndex}`] = el;
+                }}
                 src={currentItem.src}
                 className="max-w-[90%] max-h-[90%] object-contain"
                 onClick={(e) => {
@@ -529,15 +607,15 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               <div className="absolute inset-0 pointer-events-none">
                 <div className="pointer-events-auto h-full w-full flex items-end">
                   <VideoControls
-                    isPlaying={isPlaying}
+                    isPlaying={isPlaying[currentIndex] || false}
                     isMuted={isMuted}
                     volume={volume}
                     onPlayPause={toggleVideo}
                     onMuteToggle={handleMuteToggle}
                     onVolumeChange={handleVolumeChange}
-                    currentTime={currentTime}
-                    duration={duration}
-                    bufferedTime={bufferedTime}
+                    currentTime={currentTime[currentIndex] || 0}
+                    duration={duration[currentIndex] || 0}
+                    bufferedTime={bufferedTime[currentIndex] || 0}
                     onSeek={handleSeek}
                     onSkipForward={handleSkipForward}
                     onSkipBackward={handleSkipBackward}
