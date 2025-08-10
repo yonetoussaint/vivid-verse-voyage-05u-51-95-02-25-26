@@ -263,7 +263,10 @@ const ProductDetail = () => {
       />
 
       <div className="relative w-full bg-transparent" ref={overviewRef}>
-        <ProductImageGallery images={productImages.length > 0 ? productImages : ["/placeholder.svg"]} />
+       <ProductImageGallery 
+  images={productImages.length > 0 ? productImages : ["/placeholder.svg"]}
+  videos={product?.product_videos || []}
+/>
       </div>
 
       <div className="flex-1 overscroll-none pb-[112px]"> {/* Add bottom padding */}
