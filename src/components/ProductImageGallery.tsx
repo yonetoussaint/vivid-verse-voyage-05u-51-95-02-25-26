@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { 
   Carousel,
@@ -16,20 +17,7 @@ import InfoBand from "@/components/product/InfoBand";
 
 interface ProductImageGalleryProps {
   images: string[];
-  videos?: {
-    id: string;
-    video_url: string;
-    title?: string;
-    description?: string;
-    thumbnail_url?: string;
-  }[];
-}
-
-interface GalleryItem {
-  type: 'image' | 'video';
-  src: string;
-  videoData?: any;
-  index: number;
+  videoIndices?: number[];
 }
 
 interface TouchPosition {
@@ -37,46 +25,15 @@ interface TouchPosition {
   y: number;
 }
 
-// Helper function to combine images and videos into a unified gallery
-function createGalleryItems(images: string[], videos: any[] = []): GalleryItem[] {
-  const items: GalleryItem[] = [];
-
-  // Add images first
-  images.forEach((image) => {
-    items.push({
-      type: 'image',
-      src: image,
-      index: items.length
-    });
-  });
-
-  // Add videos
-  videos.forEach((video) => {
-    items.push({
-      type: 'video',
-      src: video.video_url,
-      videoData: video,
-      index: items.length
-    });
-  });
-
-  return items;
-}
-
 const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ 
   images, 
-  videos = []
+  videoIndices = []
 }) => {
-  // Create unified gallery items
-  const galleryItems = createGalleryItems(images, videos);
-  const totalItems = galleryItems.length;
-  const videoIndices = galleryItems.map((item, index) => item.type === 'video' ? index : -1).filter(i => i !== -1);
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [isRotated, setIsRotated] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [preloadedItems, setPreloadedItems] = useState<string[]>([]);
+  const [preloadedImages, setPreloadedImages] = useState<string[]>([]);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(false);
   const [autoScrollInterval, setAutoScrollInterval] = useState<NodeJS.Timeout | null>(null);
   const [thumbnailViewMode, setThumbnailViewMode] = useState<"row" | "grid">("row");
@@ -86,17 +43,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const [focusMode, setFocusMode] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
-
-  // FIXED: Multiple video refs instead of single ref
-  const videoRefs = useRef<{[key: number]: HTMLVideoElement | null}>({});
-  
-  // FIXED: Video states per video index
-  const [isPlaying, setIsPlaying] = useState<{[key: number]: boolean}>({});
-  const [currentTime, setCurrentTime] = useState<{[key: number]: number}>({});
-  const [duration, setDuration] = useState<{[key: number]: number}>({});
-  const [bufferedTime, setBufferedTime] = useState<{[key: number]: number}>({});
-  const [videoError, setVideoError] = useState<{[key: number]: boolean}>({});
-  const [videoLoading, setVideoLoading] = useState<{[key: number]: boolean}>({});
 
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showCompareMode, setShowCompareMode] = useState(false);
@@ -117,106 +63,65 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
   const [openedThumbnailMenu, setOpenedThumbnailMenu] = useState<number | null>(null);
 
-  // Get current item
-  const currentItem = galleryItems[currentIndex];
-  const isCurrentVideo = currentItem?.type === 'video';
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // FIXED: Early return check AFTER all hooks are declared
-  if (totalItems === 0) {
-    return (
-      <div className="flex flex-col bg-transparent">
-        <div className="relative w-full aspect-square overflow-hidden bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-500">No images or videos available</span>
-        </div>
-      </div>
-    );
-  }
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [bufferedTime, setBufferedTime] = useState(0);
 
   useEffect(() => {
-    const preloadItems = async () => {
+    const preloadImages = async () => {
       const preloaded = await Promise.all(
-        galleryItems.map((item) => {
+        images.map((src) => {
           return new Promise<string>((resolve) => {
-            if (item.type === 'image') {
-              const img = new Image();
-              img.src = item.src;
-              img.onload = () => resolve(item.src);
-              img.onerror = () => resolve(item.src);
-            } else {
-              // For videos, just resolve the URL
-              resolve(item.src);
-            }
+            const img = new Image();
+            img.src = src;
+            img.onload = () => resolve(src);
+            img.onerror = () => resolve(src);
           });
         })
       );
-      setPreloadedItems(preloaded);
+      setPreloadedImages(preloaded);
     };
 
-    preloadItems();
-  }, [galleryItems]);
+    preloadImages();
+  }, [images]);
 
-  // FIXED: Video event listeners for current video only
   useEffect(() => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (!currentVideoRef || !isCurrentVideo) return;
+    if (videoRef.current) {
+      videoRef.current.addEventListener('play', () => {
+        setIsPlaying(true);
+      });
 
-    const onPlay = () => setIsPlaying(prev => ({ ...prev, [currentIndex]: true }));
-    const onPause = () => setIsPlaying(prev => ({ ...prev, [currentIndex]: false }));
-    const onTimeUpdate = () => setCurrentTime(prev => ({ ...prev, [currentIndex]: currentVideoRef.currentTime || 0 }));
-    const onLoadedMetadata = () => setDuration(prev => ({ ...prev, [currentIndex]: currentVideoRef.duration || 0 }));
+      videoRef.current.addEventListener('pause', () => {
+        setIsPlaying(false);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const onTimeUpdate = () => setCurrentTime(video.currentTime || 0);
+    const onLoadedMetadata = () => setDuration(video.duration || 0);
     const onProgress = () => {
-      if (currentVideoRef.buffered.length > 0) {
-        setBufferedTime(prev => ({ 
-          ...prev, 
-          [currentIndex]: currentVideoRef.buffered.end(currentVideoRef.buffered.length - 1) 
-        }));
+      if (video.buffered.length > 0) {
+        setBufferedTime(video.buffered.end(video.buffered.length - 1));
       }
     };
-    const onLoadStart = () => setVideoLoading(prev => ({ ...prev, [currentIndex]: true }));
-    const onCanPlay = () => setVideoLoading(prev => ({ ...prev, [currentIndex]: false }));
-    const onError = () => {
-      setVideoError(prev => ({ ...prev, [currentIndex]: true }));
-      setVideoLoading(prev => ({ ...prev, [currentIndex]: false }));
-      console.error('Video failed to load:', currentItem.src);
-    };
 
-    currentVideoRef.addEventListener('play', onPlay);
-    currentVideoRef.addEventListener('pause', onPause);
-    currentVideoRef.addEventListener('timeupdate', onTimeUpdate);
-    currentVideoRef.addEventListener('loadedmetadata', onLoadedMetadata);
-    currentVideoRef.addEventListener('progress', onProgress);
-    currentVideoRef.addEventListener('loadstart', onLoadStart);
-    currentVideoRef.addEventListener('canplay', onCanPlay);
-    currentVideoRef.addEventListener('error', onError);
+    video.addEventListener('timeupdate', onTimeUpdate);
+    video.addEventListener('loadedmetadata', onLoadedMetadata);
+    video.addEventListener('progress', onProgress);
 
     return () => {
-      currentVideoRef.removeEventListener('play', onPlay);
-      currentVideoRef.removeEventListener('pause', onPause);
-      currentVideoRef.removeEventListener('timeupdate', onTimeUpdate);
-      currentVideoRef.removeEventListener('loadedmetadata', onLoadedMetadata);
-      currentVideoRef.removeEventListener('progress', onProgress);
-      currentVideoRef.removeEventListener('loadstart', onLoadStart);
-      currentVideoRef.removeEventListener('canplay', onCanPlay);
-      currentVideoRef.removeEventListener('error', onError);
+      video.removeEventListener('timeupdate', onTimeUpdate);
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      video.removeEventListener('progress', onProgress);
     };
-  }, [currentIndex, isCurrentVideo, currentItem]);
-
-  // FIXED: Reset states when switching items
-  useEffect(() => {
-    if (currentItem?.type !== 'video') {
-      setIsRotated(0);
-      setIsFlipped(false);
-      setZoomLevel(1);
-    }
-    
-    // Pause other videos when switching
-    Object.keys(videoRefs.current).forEach(key => {
-      const index = parseInt(key);
-      if (index !== currentIndex && videoRefs.current[index]) {
-        videoRefs.current[index]?.pause();
-      }
-    });
-  }, [currentIndex, currentItem]);
+  }, [videoRef.current]);
 
   const onApiChange = useCallback((api: CarouselApi | null) => {
     if (!api) return;
@@ -227,9 +132,82 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     api.on("select", () => {
       const index = api.selectedScrollSnap();
       setCurrentIndex(index);
+      setIsRotated(0);
+      setIsFlipped(false);
+      setZoomLevel(1);
+
       setViewHistory(prev => [...prev, index]);
     });
   }, []);
+
+  const undoLastView = useCallback(() => {
+    if (viewHistory.length > 1) {
+      const newHistory = [...viewHistory];
+      newHistory.pop();
+      const lastIndex = newHistory[newHistory.length - 1];
+
+      if (api) {
+        api.scrollTo(lastIndex);
+      }
+
+      setViewHistory(newHistory);
+    }
+  }, [api, viewHistory]);
+
+  const applyFilter = useCallback((filter: string) => {
+    setImageFilter(filter);
+
+    toast({
+      title: "Filter Applied",
+      description: `Image filter: ${filter}`,
+      duration: 2000,
+    });
+  }, []);
+
+  const resetEnhancements = useCallback(() => {
+    setIsRotated(0);
+    setIsFlipped(false);
+    setZoomLevel(1);
+    setImageFilter("none");
+
+    toast({
+      title: "Image Reset",
+      description: "All image modifications have been reset",
+      duration: 2000,
+    });
+  }, []);
+
+  const shareImage = useCallback((index: number) => {
+    const image = images[index];
+    if (navigator.share) {
+      navigator.share({
+        title: "Check out this product image",
+        text: "I found this amazing product image!",
+        url: image,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(image);
+      toast({
+        title: "Image URL Copied",
+        description: "Image link copied to clipboard for sharing",
+        duration: 2000,
+      });
+    }
+  }, [images]);
+
+  const toggleCompareMode = useCallback(() => {
+    setShowCompareMode(prev => !prev);
+  }, []);
+
+  const toggleImmersiveView = useCallback(() => {
+    setViewMode(prev => prev === "default" ? "immersive" : "default");
+
+    toast({
+      title: viewMode === "default" ? "Immersive View" : "Default View",
+      description: viewMode === "default" ? "Showing image without distractions" : "Showing standard gallery view",
+      duration: 2000,
+    });
+  }, [viewMode]);
 
   const handleThumbnailClick = useCallback((index: number) => {
     if (api) {
@@ -253,35 +231,39 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     setIsFlipped(prev => !prev);
   }, []);
 
-  const downloadItem = useCallback((index: number) => {
-    const item = galleryItems[index];
+  const downloadImage = useCallback((index: number) => {
+    const image = images[index];
     const link = document.createElement('a');
-    link.href = item.src;
-    link.download = `product-${item.type}-${index + 1}.${item.type === 'video' ? 'mp4' : 'jpg'}`;
+    link.href = image;
+    link.download = `product-image-${index + 1}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     toast({
-      title: `${item.type === 'video' ? 'Video' : 'Image'} downloaded`,
-      description: `${item.type === 'video' ? 'Video' : 'Image'} ${index + 1} has been downloaded`,
+      title: "Image downloaded",
+      description: `Image ${index + 1} has been downloaded`,
       duration: 2000,
     });
-  }, [galleryItems]);
+  }, [images]);
 
-  const copyItemUrl = useCallback((index: number) => {
-    const item = galleryItems[index];
-    navigator.clipboard.writeText(item.src);
+  const copyImageUrl = useCallback((index: number) => {
+    const image = images[index];
+    navigator.clipboard.writeText(image);
 
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
 
     toast({
-      title: `${item.type === 'video' ? 'Video' : 'Image'} URL copied`,
-      description: `${item.type === 'video' ? 'Video' : 'Image'} URL has been copied to clipboard`,
+      title: "Image URL copied",
+      description: "Image URL has been copied to clipboard",
       duration: 2000,
     });
-  }, [galleryItems]);
+  }, [images]);
+
+  const toggleThumbnailViewMode = useCallback(() => {
+    setThumbnailViewMode(prev => prev === "row" ? "grid" : "row");
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreenMode(prev => !prev);
@@ -293,88 +275,80 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     }
   }, [isFullscreenMode]);
 
+  const handleThumbnailMenuToggle = useCallback((index: number, isOpen: boolean) => {
+    if (isOpen) {
+      setOpenedThumbnailMenu(index);
+    } else if (openedThumbnailMenu === index) {
+      setOpenedThumbnailMenu(null);
+    }
+  }, [openedThumbnailMenu]);
+
+  const handleMenuAction = useCallback((e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    e.preventDefault();
+    action();
+  }, []);
+
   const toggleFocusMode = useCallback(() => {
     setFocusMode(prev => !prev);
-  }, []);
+  }, [focusMode]);
 
   const handleImageClick = useCallback(() => {
     if (focusMode) {
       setFocusMode(false);
-    } else if (!isCurrentVideo) {
+    } else {
       toggleFullscreen();
     }
-  }, [focusMode, toggleFullscreen, isCurrentVideo]);
-
-  // FIXED: Video control handlers using multiple refs
-  const toggleVideo = () => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
-      if (isPlaying[currentIndex]) {
-        currentVideoRef.pause();
-      } else {
-        currentVideoRef.play();
-      }
-    }
-  };
+  }, [focusMode, toggleFullscreen]);
 
   const handleMuteToggle = () => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
+    if (videoRef.current) {
       const newMutedState = !isMuted;
-      currentVideoRef.muted = newMutedState;
+      videoRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
     }
   };
 
   const handleVolumeChange = (newVolume: number) => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
-      currentVideoRef.volume = newVolume;
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
       setVolume(newVolume);
       setIsMuted(newVolume === 0);
     }
   };
 
   const handleSeek = (newTime: number) => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
-      currentVideoRef.currentTime = newTime;
-      setCurrentTime(prev => ({ ...prev, [currentIndex]: newTime }));
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
   const handleSkipForward = () => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
-      const newTime = Math.min((currentVideoRef.currentTime || 0) + 10, duration[currentIndex] || 0);
-      currentVideoRef.currentTime = newTime;
-      setCurrentTime(prev => ({ ...prev, [currentIndex]: newTime }));
+    if (videoRef.current) {
+      const newTime = Math.min((videoRef.current.currentTime || 0) + 10, duration);
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
   const handleSkipBackward = () => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
-      const newTime = Math.max((currentVideoRef.currentTime || 0) - 10, 0);
-      currentVideoRef.currentTime = newTime;
-      setCurrentTime(prev => ({ ...prev, [currentIndex]: newTime }));
+    if (videoRef.current) {
+      const newTime = Math.max((videoRef.current.currentTime || 0) - 10, 0);
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
   const handleFullscreenVideo = () => {
-    const currentVideoRef = videoRefs.current[currentIndex];
-    if (currentVideoRef) {
+    if (videoRef.current) {
       if (document.fullscreenElement) {
         document.exitFullscreen();
       } else {
-        currentVideoRef.requestFullscreen();
+        videoRef.current.requestFullscreen();
       }
     }
   };
-
-  const toggleAutoScroll = useCallback(() => {
-    setAutoScrollEnabled(prev => !prev);
-  }, []);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -410,30 +384,40 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     };
   }, [autoScrollEnabled, api]);
 
+  const toggleAutoScroll = useCallback(() => {
+    setAutoScrollEnabled(prev => !prev);
+  }, [autoScrollEnabled]);
+
+  const toggleVideo = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   return (
     <div ref={containerRef} className="flex flex-col bg-transparent">
       <div className="relative w-full aspect-square overflow-hidden">
         <Carousel
           className="w-full h-full"
           opts={{
-            loop: totalItems > 1,
+            loop: true,
           }}
           setApi={onApiChange}
         >
           <CarouselContent className="h-full">
-            {galleryItems.map((item, index) => (
-              <CarouselItem key={`${item.type}-${index}`} className="h-full">
+            {images.map((source, index) => (
+              <CarouselItem key={index} className="h-full">
                 <div className="flex h-full w-full items-center justify-center overflow-hidden relative">
-                  {item.type === 'video' ? (
+                  {videoIndices.includes(index) ? (
                     <div className="relative w-full h-full flex items-center justify-center">
-                      {/* FIXED: Better video element with proper ref management */}
                       <video
-                        ref={(el) => {
-                          if (el) {
-                            videoRefs.current[index] = el;
-                          }
-                        }}
-                        src={item.src}
+                        ref={videoRef}
+                        src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                         className="w-full h-full object-contain cursor-pointer"
                         style={{ 
                           maxWidth: '100%', 
@@ -445,68 +429,34 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
                         playsInline
                         loop
                         muted={isMuted}
-                        autoPlay={false}
-                        poster={item.videoData?.thumbnail_url}
-                        preload="metadata"
+                        autoPlay
                       >
                         Your browser does not support the video tag.
                       </video>
-
-                      {/* Error state */}
-                      {videoError[index] && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                          <div className="text-center">
-                            <span className="text-gray-500 block">Video failed to load</span>
-                            <button 
-                              onClick={() => {
-                                setVideoError(prev => ({ ...prev, [index]: false }));
-                                const videoEl = videoRefs.current[index];
-                                if (videoEl) {
-                                  videoEl.load();
-                                }
-                              }}
-                              className="text-blue-500 text-sm mt-2 hover:underline"
-                            >
-                              Retry
-                            </button>
-                          </div>
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="pointer-events-auto h-full w-full flex items-end">
+                          <VideoControls
+                            isPlaying={isPlaying}
+                            isMuted={isMuted}
+                            volume={volume}
+                            onPlayPause={toggleVideo}
+                            onMuteToggle={handleMuteToggle}
+                            onVolumeChange={handleVolumeChange}
+                            currentTime={currentTime}
+                            duration={duration}
+                            bufferedTime={bufferedTime}
+                            onSeek={handleSeek}
+                            onSkipForward={handleSkipForward}
+                            onSkipBackward={handleSkipBackward}
+                            onFullscreenToggle={handleFullscreenVideo}
+                          />
                         </div>
-                      )}
-
-                      {/* Loading state */}
-                      {videoLoading[index] && !videoError[index] && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                        </div>
-                      )}
-
-                      {/* Video controls for current video */}
-                      {index === currentIndex && !videoError[index] && (
-                        <div className="absolute inset-0 pointer-events-none">
-                          <div className="pointer-events-auto h-full w-full flex items-end">
-                            <VideoControls
-                              isPlaying={isPlaying[currentIndex] || false}
-                              isMuted={isMuted}
-                              volume={volume}
-                              onPlayPause={toggleVideo}
-                              onMuteToggle={handleMuteToggle}
-                              onVolumeChange={handleVolumeChange}
-                              currentTime={currentTime[currentIndex] || 0}
-                              duration={duration[currentIndex] || 0}
-                              bufferedTime={bufferedTime[currentIndex] || 0}
-                              onSeek={handleSeek}
-                              onSkipForward={handleSkipForward}
-                              onSkipBackward={handleSkipBackward}
-                              onFullscreenToggle={handleFullscreenVideo}
-                            />
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   ) : (
                     <img
                       ref={index === currentIndex ? imageRef : undefined}
-                      src={item.src}
+                      src={source}
                       alt={`Product image ${index + 1}`}
                       className="w-full h-full object-contain transition-transform"
                       style={{
@@ -533,17 +483,16 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             ))}
           </CarouselContent>
 
-          {/* Show image controls only for images */}
-          {!isCurrentVideo && (
+          {!videoIndices.includes(currentIndex) && (
             <ImageGalleryControls
               currentIndex={currentIndex}
-              totalImages={totalItems}
+              totalImages={images.length}
               isRotated={isRotated}
               isFlipped={isFlipped}
               autoScrollEnabled={autoScrollEnabled}
               focusMode={focusMode}
-              isPlaying={false}
-              showControls={!(focusMode || (isCurrentVideo && isPlaying[currentIndex]))}
+              isPlaying={videoIndices.includes(currentIndex) && isPlaying}
+              showControls={!(focusMode || (videoIndices.includes(currentIndex) && isPlaying))}
               onRotate={handleRotate}
               onFlip={handleFlip}
               onToggleAutoScroll={toggleAutoScroll}
@@ -555,22 +504,19 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
       <InfoBand />
 
-      {/* Thumbnails */}
-      {totalItems > 1 && (
+      {images.length > 1 && (
         <div className="mt-1 w-full">
           <GalleryThumbnails
-            images={galleryItems.map(item => item.src)}
+            images={images}
             currentIndex={currentIndex}
             onThumbnailClick={handleThumbnailClick}
-            isPlaying={isPlaying[currentIndex] || false}
+            isPlaying={isPlaying}
             videoIndices={videoIndices}
-            galleryItems={galleryItems}
           />
         </div>
       )}
 
-      {/* Fullscreen Mode */}
-      {isFullscreenMode && (
+      {isFullscreenMode && !videoIndices.includes(currentIndex) && (
         <div 
           ref={fullscreenRef}
           className="fixed inset-0 bg-black z-50 flex items-center justify-center animate-fade-in"
@@ -582,103 +528,106 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           >
             <ArrowUpToLine className="h-5 w-5" />
           </button>
+          <img 
+            src={images[currentIndex]} 
+            alt={`Product fullscreen image ${currentIndex + 1}`} 
+            className="max-w-[90%] max-h-[90%] object-contain"
+            style={{
+              transform: `
+                rotate(${isRotated}deg)
+                ${isFlipped ? 'scaleX(-1)' : ''}
+                scale(${zoomLevel})
+              `,
+              filter: imageFilter !== "none"
+                ? imageFilter === "grayscale" ? "grayscale(1)"
+                  : imageFilter === "sepia" ? "sepia(0.7)"
+                    : imageFilter === "brightness" ? "brightness(1.2)"
+                      : imageFilter === "contrast" ? "contrast(1.2)"
+                        : "none"
+                : "none"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <ImageGalleryControls
+            currentIndex={currentIndex}
+            totalImages={images.length}
+            isRotated={isRotated}
+            isFlipped={isFlipped}
+            autoScrollEnabled={autoScrollEnabled}
+            focusMode={focusMode}
+            variant="fullscreen"
+            onRotate={(e) => {
+              if (e) e.stopPropagation();
+              handleRotate();
+            }}
+            onFlip={(e) => {
+              if (e) e.stopPropagation();
+              handleFlip();
+            }}
+            onToggleAutoScroll={toggleAutoScroll}
+            onToggleFocusMode={toggleFocusMode}
+            onPrevious={(e) => {
+              if (e) e.stopPropagation();
+              handlePrevious();
+            }}
+            onNext={(e) => {
+              if (e) e.stopPropagation();
+              handleNext();
+            }}
+            onDownload={(e) => {
+              if (e) e.stopPropagation();
+              downloadImage(currentIndex);
+            }}
+          />
+        </div>
+      )}
 
-          {isCurrentVideo ? (
-            <div className="relative w-full h-full flex items-center justify-center">
-              <video
-                ref={(el) => {
-                  if (el) videoRefs.current[`fullscreen-${currentIndex}`] = el;
-                }}
-                src={currentItem.src}
-                className="max-w-[90%] max-h-[90%] object-contain"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleVideo();
-                }}
-                playsInline
-                loop
-                muted={isMuted}
-                autoPlay={false}
-                style={{ background: "black" }}
-                controls={false}
-              >
-                Your browser does not support the video tag.
-              </video>
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="pointer-events-auto h-full w-full flex items-end">
-                  <VideoControls
-                    isPlaying={isPlaying[currentIndex] || false}
-                    isMuted={isMuted}
-                    volume={volume}
-                    onPlayPause={toggleVideo}
-                    onMuteToggle={handleMuteToggle}
-                    onVolumeChange={handleVolumeChange}
-                    currentTime={currentTime[currentIndex] || 0}
-                    duration={duration[currentIndex] || 0}
-                    bufferedTime={bufferedTime[currentIndex] || 0}
-                    onSeek={handleSeek}
-                    onSkipForward={handleSkipForward}
-                    onSkipBackward={handleSkipBackward}
-                    onFullscreenToggle={handleFullscreenVideo}
-                  />
-                </div>
+      {isFullscreenMode && videoIndices.includes(currentIndex) && (
+        <div 
+          ref={fullscreenRef}
+          className="fixed inset-0 bg-black z-50 flex items-center justify-center animate-fade-in"
+          onClick={toggleFullscreen}
+        >
+          <button 
+            className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors"
+            onClick={toggleFullscreen}
+          >
+            <ArrowUpToLine className="h-5 w-5" />
+          </button>
+          <div className="relative w-full h-full flex items-center justify-center">
+            <video
+              ref={videoRef}
+              src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+              className="max-w-[90%] max-h-[90%] object-contain"
+              onClick={toggleVideo}
+              playsInline
+              loop
+              muted={isMuted}
+              autoPlay
+              style={{ background: "black" }}
+            >
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="pointer-events-auto h-full w-full flex items-end">
+                <VideoControls
+                  isPlaying={isPlaying}
+                  isMuted={isMuted}
+                  volume={volume}
+                  onPlayPause={toggleVideo}
+                  onMuteToggle={handleMuteToggle}
+                  onVolumeChange={handleVolumeChange}
+                  currentTime={currentTime}
+                  duration={duration}
+                  bufferedTime={bufferedTime}
+                  onSeek={handleSeek}
+                  onSkipForward={handleSkipForward}
+                  onSkipBackward={handleSkipBackward}
+                  onFullscreenToggle={handleFullscreenVideo}
+                />
               </div>
             </div>
-          ) : (
-            <>
-              <img 
-                src={currentItem.src} 
-                alt={`Product fullscreen image ${currentIndex + 1}`} 
-                className="max-w-[90%] max-h-[90%] object-contain"
-                style={{
-                  transform: `
-                    rotate(${isRotated}deg)
-                    ${isFlipped ? 'scaleX(-1)' : ''}
-                    scale(${zoomLevel})
-                  `,
-                  filter: imageFilter !== "none"
-                    ? imageFilter === "grayscale" ? "grayscale(1)"
-                      : imageFilter === "sepia" ? "sepia(0.7)"
-                        : imageFilter === "brightness" ? "brightness(1.2)"
-                          : imageFilter === "contrast" ? "contrast(1.2)"
-                            : "none"
-                    : "none"
-                }}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <ImageGalleryControls
-                currentIndex={currentIndex}
-                totalImages={totalItems}
-                isRotated={isRotated}
-                isFlipped={isFlipped}
-                autoScrollEnabled={autoScrollEnabled}
-                focusMode={focusMode}
-                variant="fullscreen"
-                onRotate={(e) => {
-                  if (e) e.stopPropagation();
-                  handleRotate();
-                }}
-                onFlip={(e) => {
-                  if (e) e.stopPropagation();
-                  handleFlip();
-                }}
-                onToggleAutoScroll={toggleAutoScroll}
-                onToggleFocusMode={toggleFocusMode}
-                onPrevious={(e) => {
-                  if (e) e.stopPropagation();
-                  handlePrevious();
-                }}
-                onNext={(e) => {
-                  if (e) e.stopPropagation();
-                  handleNext();
-                }}
-                onDownload={(e) => {
-                  if (e) e.stopPropagation();
-                  downloadItem(currentIndex);
-                }}
-              />
-            </>
-          )}
+          </div>
         </div>
       )}
     </div>
