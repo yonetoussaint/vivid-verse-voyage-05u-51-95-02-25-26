@@ -132,19 +132,18 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
             </button>
             {seller.verified && <VerificationBadge size="xs" />}
           </div>
+        </div>
 
-          {/* Rating */}
-          <div className="flex items-center gap-1 ml-1">
-            <span className="text-gray-300">|</span>
+        {/* Rating and Sales Count */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span className="text-yellow-500 text-xs">★</span>
             <span className="text-xs text-gray-700">{rating}</span>
           </div>
-        </div>
-
-        {/* Sales Count */}
-        <div className="flex items-center gap-1">
-          <ShoppingBag className="w-3 h-3 text-gray-400" />
-          <span className="text-xs text-gray-500">({formatSales(totalSales)})</span>
+          <div className="flex items-center gap-1">
+            <ShoppingBag className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-500">({formatSales(totalSales)})</span>
+          </div>
         </div>
       </div>
 
