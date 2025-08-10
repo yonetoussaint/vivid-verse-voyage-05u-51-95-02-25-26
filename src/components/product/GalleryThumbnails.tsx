@@ -1,7 +1,3 @@
-import React from 'react';
-import { cn } from "@/lib/utils";
-import { Play } from "lucide-react";
-
 interface GalleryThumbnailsProps {
   images: string[];
   currentIndex: number;
@@ -56,8 +52,8 @@ export const GalleryThumbnails = ({
                 )}>
                   <Play className="h-4 w-4 text-white" />
                 </div>
-                {/* Video indicator badge */}
-                <div className="absolute top-0.5 left-0.5 text-[8px] bg-red-600 text-white px-1 rounded text-center font-semibold">
+                {/* Video duration badge */}
+                <div className="absolute top-0.5 left-0.5 text-[8px] bg-black/60 text-white px-1 rounded text-center">
                   VIDEO
                 </div>
               </div>
