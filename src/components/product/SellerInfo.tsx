@@ -103,7 +103,7 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
   };
 
   return (
-    <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+    <div className="bg-white p-3 rounded-lg border border-gray-200">
       {/* Seller Info Row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
