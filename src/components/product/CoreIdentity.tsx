@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+,import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProduct } from '@/hooks/useProduct';
@@ -287,34 +287,38 @@ const ExpandableCard = () => {
       {/* Price Display when no description */}
 {!description && (
   <div className="flex items-center space-x-2 mt-2">
-    <button
-      onClick={toggleCurrency}
-      className="flex items-center bg-white border border-gray-300 rounded px-2 h-8 hover:bg-gray-50 transition-colors duration-200"
-    >
-      <span className="text-gray-600 text-sm font-bold flex items-center">
-        <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">
-          {currencyFlags[currentCurrency]}
+    <div className="flex items-center">
+      <button
+        onClick={toggleCurrency}
+        className="flex items-center px-2 h-8 hover:bg-gray-50 transition-colors duration-200 rounded"
+      >
+        <span className="text-gray-600 text-sm font-bold flex items-center">
+          <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">
+            {currencyFlags[currentCurrency]}
+          </span>
+          {currencies[currentCurrency]}
         </span>
-        {currencies[currentCurrency]}
-      </span>
-      <span className="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-gray-100">
-        <ChevronDown className="w-3 h-3 font-black stroke-2 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
-      </span>
-      <span className="text-orange-500 text-lg font-black ml-2 h-8 flex items-center">
-        {convertPrice(product?.discount_price || product?.price || 104.99)}
-      </span>
-    </button>
-    <div className="relative h-6 overflow-hidden">
-      <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-6' : 'translate-y-0'}`}>
-        <div className="h-6 flex items-center">
-          <span className="text-gray-400 text-sm line-through">
-            {convertPrice(product?.price || 149.99)}
-          </span>
-        </div>
-        <div className="h-6 flex items-center">
-          <span className="text-red-500 text-sm font-bold">
-            -20% OFF
-          </span>
+        <span className="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-gray-100">
+          <ChevronDown className="w-3 h-3 font-black stroke-2 text-gray-600 hover:text-gray-800 transition-colors duration-200" />
+        </span>
+        <span className="text-orange-500 text-lg font-black ml-2 h-8 flex items-center">
+          {convertPrice(product?.discount_price || product?.price || 104.99)}
+        </span>
+      </button>
+    </div>
+    <div className="flex items-center">
+      <div className="relative h-6 overflow-hidden">
+        <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-6' : 'translate-y-0'}`}>
+          <div className="h-6 flex items-center">
+            <span className="text-gray-400 text-sm line-through">
+              {convertPrice(product?.price || 149.99)}
+            </span>
+          </div>
+          <div className="h-6 flex items-center">
+            <span className="text-red-500 text-sm font-bold">
+              -20% OFF
+            </span>
+          </div>
         </div>
       </div>
     </div>
