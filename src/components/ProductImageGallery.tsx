@@ -117,6 +117,17 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const currentItem = galleryItems[currentIndex];
   const isCurrentVideo = currentItem?.type === 'video';
 
+  // MOVED: Early return check AFTER all hooks are declared
+  if (totalItems === 0) {
+    return (
+      <div className="flex flex-col bg-transparent">
+        <div className="relative w-full aspect-square overflow-hidden bg-gray-100 flex items-center justify-center">
+          <span className="text-gray-500">No images or videos available</span>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     const preloadItems = async () => {
       const preloaded = await Promise.all(
@@ -359,16 +370,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     };
   }, [autoScrollEnabled, api]);
 
-  if (totalItems === 0) {
-    return (
-      <div className="flex flex-col bg-transparent">
-        <div className="relative w-full aspect-square overflow-hidden bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-500">No images or videos available</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div ref={containerRef} className="flex flex-col bg-transparent">
       <div className="relative w-full aspect-square overflow-hidden">
@@ -506,7 +507,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           >
             <ArrowUpToLine className="h-5 w-5" />
           </button>
-          
+
           {isCurrentVideo ? (
             <div className="relative w-full h-full flex items-center justify-center">
               <video
