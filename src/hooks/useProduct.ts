@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProductById } from "@/integrations/supabase/products";
@@ -20,7 +19,7 @@ export function useProduct(productId: string) {
     if (!productId) return;
 
     console.log(`Setting up real-time subscription for product: ${productId}`);
-    
+
     // Create a channel for subscription to specific product changes
     const channel = supabase
       .channel(`product-${productId}`)
@@ -67,13 +66,13 @@ export function useProductAnalytics(productId: string) {
     queryFn: async (): Promise<ProductAnalytics> => {
       try {
         const product = await fetchProductById(productId);
-        
+
         // Use real data from the database with some calculations
         const viewCount = product.views || 0;
         const recentViewers = Math.floor(viewCount * 0.02) + Math.floor(Math.random() * 10); // Simulate recent viewers
         const salesLastHour = Math.floor(Math.random() * 20); // Simulate sales data
         const trending = viewCount > 50 || product.flash_deal; // Trending if high views or flash deal
-        
+
         return {
           viewCount,
           recentViewers,
