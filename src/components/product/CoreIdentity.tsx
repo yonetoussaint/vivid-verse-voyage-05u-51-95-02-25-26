@@ -284,12 +284,12 @@ const ExpandableCard = () => {
         </div>
       )}
 
-     {!description && (
-  <div className="flex items-baseline gap-3 mt-2">
-    {/* Main Price */}
+    {!description && (
+  <div className="flex items-center gap-2 mt-2">
+    {/* Currency and Main Price */}
     <button 
       onClick={toggleCurrency}
-      className="flex items-baseline hover:opacity-80 transition-opacity"
+      className="flex items-center hover:opacity-80 transition-opacity"
     >
       <span className="flex items-center text-gray-600 text-lg font-bold">
         <span className="mr-1 rounded-full overflow-hidden w-5 h-5 flex items-center justify-center text-xs">
@@ -298,7 +298,7 @@ const ExpandableCard = () => {
         {currencies[currentCurrency]}
       </span>
       <span className="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100">
-        <ChevronDown className="w-3 h-3 font-black stroke-2 text-gray-600" />
+        <ChevronDown className="w-3.5 h-3.5 font-black stroke-2 text-gray-600" />
       </span>
       <span className="text-orange-500 text-xl font-black ml-2">
         {convertPrice(product?.discount_price || product?.price || 104.99)}
@@ -307,7 +307,7 @@ const ExpandableCard = () => {
 
     {/* Original Price */}
     <div className="flex items-center">
-      <span className="text-gray-400 text-lg line-through">
+      <span className="text-gray-400 text-sm line-through">
         {currencies[currentCurrency]}{convertPrice(product?.price || 149.99)}
       </span>
     </div>
