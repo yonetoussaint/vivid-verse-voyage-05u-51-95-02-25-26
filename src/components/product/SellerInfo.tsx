@@ -1,5 +1,6 @@
 // SellerInfo.tsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Store, ShoppingBag, Users, Bell, BellOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import VerificationBadge from "@/components/shared/VerificationBadge";
@@ -37,6 +38,7 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
 }) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   if (!seller) {
     return null;
@@ -59,6 +61,10 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSellerClick = () => {
+    navigate(`/seller/${seller.id}`);
   };
 
   const formatNumber = (num: number): string => {
@@ -103,20 +109,28 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500">Sold by</span>
 
-          {/* Seller Avatar */}
-          <div className="w-6 h-6 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+          {/* Clickable Seller Avatar */}
+          <button
+            onClick={handleSellerClick}
+            className="w-6 h-6 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 hover:ring-2 hover:ring-blue-500 hover:ring-offset-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            title={`Visit ${seller.name}'s profile`}
+          >
             <img 
               src={logoUrl || FALLBACK_SELLER_LOGO}
               alt={`${seller.name} seller`}
               className="w-full h-full object-cover"
               onError={handleImageError}
             />
-          </div>
+          </button>
 
           <div className="flex items-center gap-1">
-            <h3 className="text-xs font-medium text-gray-900 truncate max-w-[100px]">
+            <button
+              onClick={handleSellerClick}
+              className="text-xs font-medium text-gray-900 truncate max-w-[100px] hover:text-blue-600 hover:underline transition-colors"
+              title={`Visit ${seller.name}'s profile`}
+            >
               {seller.name}
-            </h3>
+            </button>
             {seller.verified && <VerificationBadge size="xs" />}
           </div>
 
