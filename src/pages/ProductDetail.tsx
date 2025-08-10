@@ -1,4 +1,4 @@
-// Updated ProductDetail component - Reduced spacing between CoreIdentity and SellerInfo
+// Updated ProductDetail component with video support
 import React, { useState, useEffect, useRef } from "react";
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useNavigate } from "react-router-dom";
@@ -233,7 +233,14 @@ const ProductDetail = () => {
     );
   }
 
+  // UPDATED: Extract both images and videos from product data
   const productImages = product?.product_images?.map(img => img.src) || [];
+  const productVideos = product?.product_videos || [];
+  
+  // Add fallback image if no product_images exist but imageUrl does
+  const images = productImages.length > 0 ? productImages : 
+    (product.imageUrl ? [product.imageUrl] : ["/placeholder.svg"]);
+
   const currentPrice = product?.discount_price || product?.price || 0;
   const originalPrice = product?.price || 0;
 
@@ -255,6 +262,13 @@ const ProductDetail = () => {
     ? Math.floor(selectedVariantStockInfo.currentStock)
     : (currentVariant ? currentVariant.stock : 0);
 
+  // UPDATED: Log video data for debugging
+  useEffect(() => {
+    if (productVideos.length > 0) {
+      console.log('Product videos found:', productVideos);
+    }
+  }, [productVideos]);
+
   return (
     <div className="flex flex-col min-h-screen bg-white overscroll-none" ref={contentRef}>
       <ProductHeader 
@@ -263,7 +277,11 @@ const ProductDetail = () => {
       />
 
       <div className="relative w-full bg-transparent" ref={overviewRef}>
-        <ProductImageGallery images={productImages.length > 0 ? productImages : ["/placeholder.svg"]} />
+        {/* UPDATED: Pass both images and videos to the gallery */}
+        <ProductImageGallery 
+          images={images}
+          videos={productVideos}
+        />
       </div>
 
       <div className="flex-1 overscroll-none pb-[112px]"> {/* Add bottom padding */}
