@@ -196,6 +196,10 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
     {seller.rating_count || 0} {seller.rating_count === 1 ? 'review' : 'reviews'}
   </span>
 </div>
+          <div className="flex items-center gap-1">
+            <ShoppingBag className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-500">({formatSales(totalSales)})</span>
+          </div>
         </div>
       </div>
 
