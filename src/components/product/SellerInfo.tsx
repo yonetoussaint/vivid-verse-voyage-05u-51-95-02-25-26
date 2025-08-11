@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Store, ShoppingBag, Users, Bell, BellOff } from "lucide-react";
+import { Store, ShoppingBag, Users, Bell, BellOff, CreditCard, Building2, Banknote, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import { Button } from "@/components/ui/button";
@@ -37,11 +37,53 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
 }) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPaymentExpanded, setIsPaymentExpanded] = useState(false);
   const navigate = useNavigate();
 
   if (!seller) {
     return null;
   }
+
+  const paymentOptions = [
+    {
+      id: 'moncash',
+      name: 'MonCash',
+      icon: <div className="w-4 h-4 bg-red-600 rounded text-white flex items-center justify-center text-xs font-bold">M</div>
+    },
+    {
+      id: 'natcash',
+      name: 'Natcash',
+      icon: <div className="w-4 h-4 bg-blue-600 rounded text-white flex items-center justify-center text-xs font-bold">N</div>
+    },
+    {
+      id: 'tcash',
+      name: 'T-Cash',
+      icon: <div className="w-4 h-4 bg-green-600 rounded text-white flex items-center justify-center text-xs font-bold">T</div>
+    },
+    {
+      id: 'card',
+      name: 'Bank Card',
+      icon: <CreditCard className="w-4 h-4" />
+    },
+    {
+      id: 'check',
+      name: 'Check',
+      icon: <div className="w-4 h-4 bg-gray-600 rounded text-white flex items-center justify-center text-xs font-bold">✓</div>
+    },
+    {
+      id: 'spih',
+      name: 'SPIH',
+      icon: <Building2 className="w-4 h-4" />
+    },
+    {
+      id: 'cash',
+      name: 'Cash',
+      icon: <Banknote className="w-4 h-4" />
+    }
+  ];
+
+  const visiblePaymentOptions = isPaymentExpanded ? paymentOptions : paymentOptions.slice(0, 3);
+  const hasMorePaymentOptions = paymentOptions.length > 3;
 
   const handleStockNotification = async () => {
     setIsLoading(true);
@@ -143,6 +185,36 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
           <div className="flex items-center gap-1">
             <ShoppingBag className="w-3 h-3 text-gray-400" />
             <span className="text-xs text-gray-500">({formatSales(totalSales)})</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Options Row */}
+      <div className="mb-2">
+        <div className="flex items-start gap-2">
+          <span className="text-xs font-medium text-gray-700 mr-2 mt-1">Payment:</span>
+          
+          <div className={`flex gap-2 ${isPaymentExpanded ? 'flex-wrap' : 'items-center'}`}>
+            {visiblePaymentOptions.map((option) => (
+              <div
+                key={option.id}
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-gray-100 text-gray-700"
+                title={option.name}
+              >
+                {option.icon}
+                <span className="whitespace-nowrap">{option.name}</span>
+              </div>
+            ))}
+            
+            {hasMorePaymentOptions && (
+              <button
+                onClick={() => setIsPaymentExpanded(!isPaymentExpanded)}
+                className="flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                title={isPaymentExpanded ? 'Show less' : 'Show more options'}
+              >
+                {isPaymentExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            )}
           </div>
         </div>
       </div>
