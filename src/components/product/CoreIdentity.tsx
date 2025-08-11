@@ -32,7 +32,12 @@ const ExpandableCard = () => {
   };
 
 
-
+const currencyToCountry = {
+    USD: 'us',
+    EUR: 'eu', 
+    GBP: 'gb',
+    CAD: 'ca'
+  };
 
 
   // Timer effect
