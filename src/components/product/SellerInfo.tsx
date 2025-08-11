@@ -192,24 +192,26 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
       {/* Payment Options Row */}
       <div className="mb-2">
         <div className="flex items-start gap-2">
-          <span className="text-xs font-medium text-gray-700 mr-2 mt-1">Payment:</span>
+          <span className="text-xs font-medium text-gray-700 mr-2 mt-1 flex-shrink-0">Payment:</span>
           
-          <div className={`flex gap-2 ${isPaymentExpanded ? 'flex-wrap' : 'items-center'}`}>
-            {visiblePaymentOptions.map((option) => (
-              <div
-                key={option.id}
-                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-gray-100 text-gray-700"
-                title={option.name}
-              >
-                {option.icon}
-                <span className="whitespace-nowrap">{option.name}</span>
-              </div>
-            ))}
+          <div className={`flex gap-2 flex-1 ${isPaymentExpanded ? 'flex-wrap' : 'items-center'}`}>
+            <div className={`flex gap-2 ${isPaymentExpanded ? 'flex-wrap' : 'items-center overflow-hidden'}`}>
+              {visiblePaymentOptions.map((option) => (
+                <div
+                  key={option.id}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 flex-shrink-0"
+                  title={option.name}
+                >
+                  {option.icon}
+                  <span className="whitespace-nowrap">{option.name}</span>
+                </div>
+              ))}
+            </div>
             
             {hasMorePaymentOptions && (
               <button
                 onClick={() => setIsPaymentExpanded(!isPaymentExpanded)}
-                className="flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                className="flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex-shrink-0"
                 title={isPaymentExpanded ? 'Show less' : 'Show more options'}
               >
                 {isPaymentExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
