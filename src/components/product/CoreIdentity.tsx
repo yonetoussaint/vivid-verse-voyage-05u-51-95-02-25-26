@@ -257,9 +257,7 @@ const CurrencyIcon = ({ currency }) => {
                       className="flex items-center hover:opacity-80 transition-opacity"
                     >
                       <span className="text-gray-600 text-sm font-bold flex items-center">
-                        <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center">
-                          <CurrencyIcon currency={currentCurrency} />
-                        </span>
+                        <span className={`fi fi-${currencyToCountry[currentCurrency]} mr-1`} style={{ fontSize: '1rem' }}></span>
                         {currencies[currentCurrency]}
                       </span>
                       <span className="ml-1 text-gray-600 hover:text-gray-800 transition-colors duration-200">
@@ -287,9 +285,7 @@ const CurrencyIcon = ({ currency }) => {
                     className="flex items-center hover:opacity-80 transition-opacity"
                   >
                     <span className="text-gray-600 text-sm font-bold flex items-center">
-                      <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center">
-                        <CurrencyIcon currency={currentCurrency} />
-                      </span>
+                      <span className={`fi fi-${currencyToCountry[currentCurrency]} mr-1`} style={{ fontSize: '1rem' }}></span>
                       {currencies[currentCurrency]}
                     </span>
                     <span className="ml-1 text-gray-600 hover:text-gray-800 transition-colors duration-200">
@@ -319,9 +315,7 @@ const CurrencyIcon = ({ currency }) => {
             className="flex items-center hover:opacity-80 transition-opacity"
           >
             <span className="flex items-center text-gray-600 text-lg font-bold">
-              <span className="mr-1 rounded-full overflow-hidden w-5 h-5 flex items-center justify-center">
-                <CurrencyIcon currency={currentCurrency} />
-              </span>
+              <span className={`fi fi-${currencyToCountry[currentCurrency]} mr-1`} style={{ fontSize: '1.25rem' }}></span>
               {currencies[currentCurrency]}
             </span>
             <span className="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-gray-100">
