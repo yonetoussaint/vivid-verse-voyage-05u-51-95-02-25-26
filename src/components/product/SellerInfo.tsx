@@ -179,8 +179,17 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
         {/* Rating and Sales Count */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
-            <span className="text-yellow-500 text-xs">★</span>
-            <span className="text-xs text-gray-700">{rating}</span>
+            <div className="flex">
+              {[1, 2, 3, 4].map((star) => (
+                <span 
+                  key={star}
+                  className={`text-xs ${star <= Math.floor(seller.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <span className="text-xs text-gray-700">({rating})</span>
           </div>
           <div className="flex items-center gap-1">
             <ShoppingBag className="w-3 h-3 text-gray-400" />
