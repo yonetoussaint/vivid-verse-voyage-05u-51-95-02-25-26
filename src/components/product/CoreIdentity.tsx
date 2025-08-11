@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProduct } from '@/hooks/useProduct';
+import 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css';
 
 const ExpandableCard = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
