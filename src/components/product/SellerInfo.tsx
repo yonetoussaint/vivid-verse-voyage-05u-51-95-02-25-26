@@ -17,6 +17,7 @@ interface SellerInfoProps {
     image_url?: string;
     verified: boolean;
     rating?: number;
+    rating_count?: number;
     total_sales: number;
     followers_count: number;
   };
@@ -183,13 +184,15 @@ const SellerInfo: React.FC<SellerInfoProps> = ({
               {[1, 2, 3, 4].map((star) => (
                 <span 
                   key={star}
-                  className={`text-xs ${star <= Math.floor(seller.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
+                  className={`text-sm ${star <= Math.floor(seller.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`}
                 >
                   ★
                 </span>
               ))}
             </div>
             <span className="text-xs text-gray-700">({rating})</span>
+            <span className="text-xs text-gray-500">•</span>
+            <span className="text-xs text-gray-500">{formatNumber(seller.rating_count || 0)} reviews</span>
           </div>
           <div className="flex items-center gap-1">
             <ShoppingBag className="w-3 h-3 text-gray-400" />
