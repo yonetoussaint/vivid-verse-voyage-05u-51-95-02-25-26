@@ -1,4 +1,4 @@
-// Updated ProductDetail component - Reduced spacing between CoreIdentity and SellerInfo
+// Updated ProductDetail component - Conditional rendering of ProductColorVariants
 import React, { useState, useEffect, useRef } from "react";
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useNavigate } from "react-router-dom";
@@ -78,11 +78,14 @@ const ProductDetail = () => {
     decayPeriod: 12 * 60 * 60 * 1000
   });
 
+  // Check if current product has variants based on type field
+  const isVariableProduct = product?.type === 'variable';
+
   useEffect(() => {
-    if (selectedColor && activateVariant) {
+    if (selectedColor && activateVariant && isVariableProduct) {
       activateVariant(selectedColor);
     }
-  }, [selectedColor, activateVariant]);
+  }, [selectedColor, activateVariant, isVariableProduct]);
 
   const triggerHaptic = async () => {
     try {
@@ -147,9 +150,13 @@ const ProductDetail = () => {
 
   const addToCart = async () => {
     await triggerHaptic();
+    const productDetails = isVariableProduct 
+      ? `${quantity} x ${product?.name || "Product"} (${selectedColor})`
+      : `${quantity} x ${product?.name || "Product"}`;
+    
     toast({
       title: "Added to cart",
-      description: `${quantity} x ${product?.name || "Product"} (${selectedColor}) added to your cart`,
+      description: `${productDetails} added to your cart`,
     });
   };
 
@@ -160,9 +167,13 @@ const ProductDetail = () => {
     const checkoutParams = new URLSearchParams({
       productName: product?.name || "Product",
       quantity: quantity.toString(),
-      color: selectedColor,
       price: currentPrice.toString(),
     });
+
+    // Only add color if it's a variable product
+    if (isVariableProduct) {
+      checkoutParams.set('color', selectedColor);
+    }
 
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
@@ -263,10 +274,10 @@ const ProductDetail = () => {
       />
 
       <div className="relative w-full bg-transparent" ref={overviewRef}>
-       <ProductImageGallery 
-  images={productImages.length > 0 ? productImages : ["/placeholder.svg"]}
-  videos={product?.product_videos || []}
-/>
+        <ProductImageGallery 
+          images={productImages.length > 0 ? productImages : ["/placeholder.svg"]}
+          videos={product?.product_videos || []}
+        />
       </div>
 
       <div className="flex-1 overscroll-none pb-[112px]"> {/* Add bottom padding */}
@@ -281,12 +292,14 @@ const ProductDetail = () => {
             <SellerInfo seller={product?.sellers} />
           </ProductSectionWrapper>
 
-          {/* ProductColorVariants with reduced top padding */}
-          <ProductSectionWrapper className="!pt-2 !mt-0">
-            <ProductColorVariants />
-          </ProductSectionWrapper>
+          {/* ProductColorVariants - Only show if product has variants */}
+          {isVariableProduct && (
+            <ProductSectionWrapper className="!pt-2 !mt-0">
+              <ProductColorVariants />
+            </ProductSectionWrapper>
+          )}
 
-          <ProductSectionWrapper>
+          <ProductSectionWrapper className={isVariableProduct ? "" : "!pt-2 !mt-0"}>
             {/* UPDATED: Pass the actual product price in HTG to BundleDeals */}
             <BundleDeals 
               currentQuantity={quantity}
