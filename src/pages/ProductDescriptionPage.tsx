@@ -80,7 +80,6 @@ const ProductDescriptionPage = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${getThemeClasses()}`}>
       {/* Header matching ProductHeader height and style */}
-     // In the header div, remove border-b and adjust styling:
 <div className="fixed top-0 left-0 right-0 z-30 bg-white">
   <div className="py-2 px-3 w-full">
     <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
