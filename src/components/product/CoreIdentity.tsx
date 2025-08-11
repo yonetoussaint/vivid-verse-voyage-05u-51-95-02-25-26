@@ -202,10 +202,12 @@ const ExpandableCard = () => {
                   <div className="flex items-center">
                     <button
                       onClick={toggleCurrency}
-                      className="flex items-center bg-white border border-gray-300 rounded px-2 h-6 hover:bg-gray-50 transition-colors duration-200"
+                      className="flex items-center hover:opacity-80 transition-opacity"
                     >
                       <span className="text-gray-600 text-sm font-bold flex items-center">
-                        <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">{currencyFlags[currentCurrency]}</span>
+                        <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center">
+                          <CurrencyIcon currency={currentCurrency} />
+                        </span>
                         {currencies[currentCurrency]}
                       </span>
                       <span className="ml-1 text-gray-600 hover:text-gray-800 transition-colors duration-200">
@@ -217,20 +219,9 @@ const ExpandableCard = () => {
                     </button>
                   </div>
                   <div className="flex items-center">
-                    <div className="relative h-5 overflow-hidden">
-                      <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-5' : 'translate-y-0'}`}>
-                        <div className="h-5 flex items-center">
-                          <span className="text-gray-400 text-sm line-through">
-                            {convertPrice(product?.price || 149.99)}
-                          </span>
-                        </div>
-                        <div className="h-5 flex items-center">
-                          <span className="text-red-500 text-sm font-bold">
-                            -20% OFF
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <span className="text-gray-400 text-sm line-through">
+                      {convertPrice(product?.price || 149.99)}
+                    </span>
                   </div>
                 </div>
               )}
@@ -241,10 +232,12 @@ const ExpandableCard = () => {
                 <div className="flex items-center">
                   <button
                     onClick={toggleCurrency}
-                    className="flex items-center bg-white border border-gray-300 rounded px-2 h-6 hover:bg-gray-50 transition-colors duration-200"
+                    className="flex items-center hover:opacity-80 transition-opacity"
                   >
                     <span className="text-gray-600 text-sm font-bold flex items-center">
-                      <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center text-xs">{currencyFlags[currentCurrency]}</span>
+                      <span className="mr-1 rounded-full overflow-hidden w-4 h-4 flex items-center justify-center">
+                        <CurrencyIcon currency={currentCurrency} />
+                      </span>
                       {currencies[currentCurrency]}
                     </span>
                     <span className="ml-1 text-gray-600 hover:text-gray-800 transition-colors duration-200">
@@ -256,20 +249,9 @@ const ExpandableCard = () => {
                   </button>
                 </div>
                 <div className="flex items-center">
-                  <div className="relative h-5 overflow-hidden">
-                    <div className={`transition-transform duration-500 ease-in-out ${showDiscount ? '-translate-y-5' : 'translate-y-0'}`}>
-                      <div className="h-5 flex items-center">
-                        <span className="text-gray-400 text-sm line-through">
-                          {convertPrice(product?.price || 149.99)}
-                        </span>
-                      </div>
-                      <div className="h-5 flex items-center">
-                        <span className="text-red-500 text-sm font-bold">
-                          -20% OFF
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <span className="text-gray-400 text-sm line-through">
+                    {convertPrice(product?.price || 149.99)}
+                  </span>
                 </div>
               </div>
             )}
@@ -286,15 +268,7 @@ const ExpandableCard = () => {
           >
             <span className="flex items-center text-gray-600 text-lg font-bold">
               <span className="mr-1 rounded-full overflow-hidden w-5 h-5 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="w-full h-full">
-                  <circle cx="256" cy="256" r="256" fill="#bd3d44"/>
-                  <path stroke="#fff" stroke-width="40" d="M0 58h512M0 137h512M0 216h512M0 295h512M0 374h512M0 453h512"/>
-                  <path fill="#192f5d" d="M0 0h390v275H0z"/>
-                  <marker id="us-a" markerHeight="30" markerWidth="30">
-                    <path fill="#fff" d="m15 0 9.3 28.6L0 11h30L5.7 28.6"/>
-                  </marker>
-                  <path fill="none" marker-mid="url(#us-a)" d="m0 0 18 11h65 65 65 65 66L51 39h65 65 65 65L18 66h65 65 65 65 66L51 94h65 65 65 65L18 121h65 65 65 65 66L51 149h65 65 65 65L18 177h65 65 65 65 66L51 205h65 65 65 65L18 232h65 65 65 65 66z"/>
-                </svg>
+                <CurrencyIcon currency={currentCurrency} />
               </span>
               {currencies[currentCurrency]}
             </span>
