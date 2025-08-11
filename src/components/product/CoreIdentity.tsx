@@ -30,6 +30,65 @@ const ExpandableCard = () => {
     EUR: '🇪🇺'
   };
 
+
+const CurrencyIcon = ({ currency }) => {
+    const iconProps = "w-full h-full";
+    
+    switch(currency) {
+      case 'USD':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className={iconProps}>
+            <circle cx="256" cy="256" r="256" fill="#bd3d44"/>
+            <path stroke="#fff" strokeWidth="40" d="M0 58h512M0 137h512M0 216h512M0 295h512M0 374h512M0 453h512"/>
+            <path fill="#192f5d" d="M0 0h390v275H0z"/>
+            <marker id="us-a" markerHeight="30" markerWidth="30">
+              <path fill="#fff" d="m15 0 9.3 28.6L0 11h30L5.7 28.6"/>
+            </marker>
+            <path fill="none" markerMid="url(#us-a)" d="m0 0 18 11h65 65 65 65 66L51 39h65 65 65 65L18 66h65 65 65 65 66L51 94h65 65 65 65L18 121h65 65 65 65 66L51 149h65 65 65 65L18 177h65 65 65 65 66L51 205h65 65 65 65L18 232h65 65 65 65 66z"/>
+          </svg>
+        );
+      case 'EUR':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className={iconProps}>
+            <circle cx="256" cy="256" r="256" fill="#003399"/>
+            <g fill="#ffcc00">
+              <path d="m256 100.174 7.713 23.736h24.928l-20.165 14.649 7.713 23.736L256 147.646l-20.189 14.649 7.713-23.736-20.165-14.649h24.928z"/>
+              <path d="m256 166.956 7.713 23.736h24.928l-20.165 14.649 7.713 23.736L256 214.428l-20.189 14.649 7.713-23.736-20.165-14.649h24.928z"/>
+            </g>
+          </svg>
+        );
+      case 'GBP':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className={iconProps}>
+            <circle cx="256" cy="256" r="256" fill="#012169"/>
+            <path fill="#fff" d="M0 0v512h512V0z"/>
+            <path fill="#c8102e" d="M512 0L0 512h512V0z"/>
+            <path fill="#fff" d="M0 0v32l480 480v-32L32 0z"/>
+            <path fill="#c8102e" d="M0 0h32l480 480h-32L0 480z"/>
+          </svg>
+        );
+      case 'CAD':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className={iconProps}>
+            <circle cx="256" cy="256" r="256" fill="#ff0000"/>
+            <rect x="0" y="0" width="128" height="512" fill="#ff0000"/>
+            <rect x="384" y="0" width="128" height="512" fill="#ff0000"/>
+            <rect x="128" y="0" width="256" height="512" fill="#fff"/>
+            <path fill="#ff0000" d="M256 200l-20 40h-20l15 25-15 25h20l20 40 20-40h20l-15-25 15-25h-20z"/>
+          </svg>
+        );
+      default:
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className={iconProps}>
+            <circle cx="256" cy="256" r="256" fill="#bd3d44"/>
+            <path stroke="#fff" strokeWidth="40" d="M0 58h512M0 137h512M0 216h512M0 295h512M0 374h512M0 453h512"/>
+            <path fill="#192f5d" d="M0 0h390v275H0z"/>
+          </svg>
+        );
+    }
+  };
+
+
   // Timer effect
   useEffect(() => {
     const timer = setInterval(() => {
