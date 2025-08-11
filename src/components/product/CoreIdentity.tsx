@@ -105,9 +105,20 @@ const ExpandableCard = () => {
     setCurrentCurrency(currencyOrder[nextIndex]);
   };
 
-  const handleShowMore = () => {
-    navigate(`/product/${paramId}/description`);
-  };
+  // In the handleShowMore function, modify to pass product data
+const handleShowMore = () => {
+  navigate(`/product/${paramId}/description`, {
+    state: { 
+      product: {
+        name: product.name,
+        description: product.description,
+        // Include any other fields you need
+        product_images: product.product_images,
+        product_videos: product.product_videos
+      }
+    }
+  });
+};
 
   const title = product.name;
   const description = product.description;
