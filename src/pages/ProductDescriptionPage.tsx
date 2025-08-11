@@ -62,6 +62,12 @@ const ProductDescriptionPage = () => {
       : 'bg-white text-gray-900';
   };
 
+  const getHeaderBg = () => {
+    return theme === 'dark' 
+      ? 'bg-gray-900' 
+      : 'bg-white';
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -81,26 +87,26 @@ const ProductDescriptionPage = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${getThemeClasses()}`}>
-      {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-opacity-20 border-gray-500">
+      {/* Header - now with solid background and reduced height */}
+      <div className={`sticky top-0 z-10 flex items-center justify-between p-3 border-b border-opacity-20 border-gray-500 ${getHeaderBg()}`}>
         <button 
           onClick={handleBack}
-          className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+          className="p-1 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-semibold">Product Description</h1>
+        <h1 className="text-base font-semibold">Description</h1>
         <button 
           onClick={handleHelp}
-          className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+          className="p-1 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
         >
-          <HelpCircle className="w-6 h-6" />
+          <HelpCircle className="w-5 h-5" />
         </button>
       </div>
 
       {/* Controls Panel */}
       {showControls && (
-        <div className={`absolute top-16 right-4 z-20 p-3 rounded-lg shadow-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`absolute top-12 right-4 z-20 p-3 rounded-lg shadow-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center space-x-4">
             <button 
               onClick={decreaseFontSize}
@@ -131,7 +137,7 @@ const ProductDescriptionPage = () => {
       )}
 
       {/* Mixed content description */}
-      <PageContainer padding="md" maxWidth="4xl" className="py-8 space-y-8">
+      <PageContainer padding="md" maxWidth="4xl" className="py-6 space-y-6">
         {descriptionContent.map((item, index) => {
           if (item.type === 'text') {
             return (
@@ -166,7 +172,7 @@ const ProductDescriptionPage = () => {
 
         {/* Reading info */}
         {descriptionContent.length > 0 && (
-          <div className={`mt-12 pt-6 border-t border-opacity-20 border-gray-500 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`mt-8 pt-4 border-t border-opacity-20 border-gray-500 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
             <div className="text-center">
               Reading time: ~{Math.ceil(
                 descriptionContent
