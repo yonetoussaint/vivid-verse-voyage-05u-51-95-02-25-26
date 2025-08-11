@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useProduct } from '@/hooks/useProduct';
-import 'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css';
 
 const ExpandableCard = () => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
@@ -15,9 +12,14 @@ const ExpandableCard = () => {
   });
   const [showDiscount, setShowDiscount] = useState(false);
 
-  const { id: paramId } = useParams<{ id: string }>();
-  const { data: product } = useProduct(paramId || '');
-  const navigate = useNavigate();
+  // Mock product data for demo
+  const product = {
+    id: '1',
+    name: 'Premium Wireless Headphones - Noise Cancelling Bluetooth 5.0',
+    description: 'Experience crystal-clear audio with our premium wireless headphones featuring active noise cancellation, 30-hour battery life, and premium comfort padding. Perfect for music lovers, professionals, and travelers who demand the best in audio quality and comfort.',
+    price: 149.99,
+    discount_price: 104.99
+  };
 
   const currencies = {
     USD: 'USD',
@@ -25,20 +27,12 @@ const ExpandableCard = () => {
     EUR: 'EUR'
   };
 
-  const currencyFlags = {
-    USD: '🇺🇸',
-    HTG: '🇭🇹',
-    EUR: '🇪🇺'
-  };
-
-
-const currencyToCountry = {
+  // Updated mapping to match your actual currencies
+  const currencyToCountry = {
     USD: 'us',
-    EUR: 'eu', 
-    GBP: 'gb',
-    CAD: 'ca'
+    HTG: 'ht', // Haiti flag
+    EUR: 'eu'
   };
-
 
   // Timer effect
   useEffect(() => {
@@ -78,8 +72,6 @@ const currencyToCountry = {
     return () => clearInterval(discountTimer);
   }, []);
 
-  if (!product) return null;
-
   const formatNumber = (num) => {
     return parseFloat(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
@@ -116,22 +108,8 @@ const currencyToCountry = {
   };
 
   const handleShowMore = () => {
-  if (!product) return; // Add safety check
-  
-  navigate(`/product/${product.id}/description`, {
-    state: { 
-      product: {
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        discount_price: product.discount_price,
-        product_images: product.product_images || [],
-        product_videos: product.product_videos || []
-      }
-    }
-  });
-};
+    console.log('Navigate to full description');
+  };
 
   const title = product.name;
   const description = product.description;
@@ -150,6 +128,9 @@ const currencyToCountry = {
 
   return (
     <div className="bg-white w-full">
+      {/* Add CSS for flag icons */}
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
+      
       {/* Product Header */}
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-gray-800 font-bold leading-tight text-lg truncate flex-1">
