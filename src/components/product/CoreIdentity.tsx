@@ -161,7 +161,7 @@ const ExpandableCard = () => {
 
       {/* Product Description */}
       {description && (
-        <div className="text-xs text-gray-700 leading-tight mt-3">
+        <div className="text-xs text-gray-700 leading-tight mt-2">
           <p className={`m-0 ${(!isDescriptionExpanded && needsShowMore) ? 'line-clamp-2' : ''}`}>
             {description}
           </p>
