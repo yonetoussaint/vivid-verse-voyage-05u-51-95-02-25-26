@@ -11,27 +11,15 @@ const ProductDescriptionPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
-  
-  // Get product data from location state or fetch it
-  const [productData, setProductData] = useState(location.state?.product);
-  const { data: fetchedProduct } = useProduct(id || '');
 
-  useEffect(() => {
-    if (!productData && fetchedProduct) {
-      setProductData({
-        name: fetchedProduct.name,
-        description: fetchedProduct.description,
-        product_images: fetchedProduct.product_images,
-        product_videos: fetchedProduct.product_videos
-      });
-    }
-  }, [fetchedProduct, productData]);
+  // Use the product data from the hook first, fallback to location state
+  const { data: product, isLoading } = useProduct(id || '');
+  const productData = product || location.state?.product;
 
   // Format the description content for display
   const formatDescriptionContent = () => {
     if (!productData?.description) return [];
-    
-    // Simple formatting - you can enhance this based on your needs
+
     return [
       {
         type: "text",
@@ -56,13 +44,93 @@ const ProductDescriptionPage = () => {
     setShowControls(!showControls);
   };
 
-  // ... rest of the component functions remain the same ...
+  const increaseFontSize = () => {
+    setFontSize(prev => Math.min(prev + 2, 24));
+  };
+
+  const decreaseFontSize = () => {
+    setFontSize(prev => Math.max(prev - 2, 12));
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const getThemeClasses = () => {
+    return theme === 'dark' 
+      ? 'bg-gray-900 text-gray-100' 
+      : 'bg-white text-gray-900';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (!productData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
+        <p className="text-gray-500">The product description is not available.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${getThemeClasses()}`}>
-      {/* Header remains the same */}
-      
-      {/* Mixed content description - use real data */}
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-opacity-20 border-gray-500">
+        <button 
+          onClick={handleBack}
+          className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <h1 className="text-lg font-semibold">Product Description</h1>
+        <button 
+          onClick={handleHelp}
+          className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+        >
+          <HelpCircle className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Controls Panel */}
+      {showControls && (
+        <div className={`absolute top-16 right-4 z-20 p-3 rounded-lg shadow-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={decreaseFontSize}
+              className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+              title="Decrease font size"
+            >
+              <Type className="w-5 h-5" />
+              <span className="sr-only">Decrease font size</span>
+            </button>
+            <button 
+              onClick={increaseFontSize}
+              className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+              title="Increase font size"
+            >
+              <Type className="w-6 h-6" />
+              <span className="sr-only">Increase font size</span>
+            </button>
+            <button 
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-colors"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              <span className="sr-only">Toggle theme</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mixed content description */}
       <PageContainer padding="md" maxWidth="4xl" className="py-8 space-y-8">
         {descriptionContent.map((item, index) => {
           if (item.type === 'text') {
