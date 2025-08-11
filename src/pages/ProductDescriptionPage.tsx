@@ -80,32 +80,27 @@ const ProductDescriptionPage = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${getThemeClasses()}`}>
       {/* Header matching ProductHeader height and style */}
-      <div className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200">
-        <div className="py-2 px-3 w-full">
-          <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
-            {/* Left side - Back button */}
-            <button 
-              onClick={handleBack}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-800" />
-            </button>
+     // In the header div, remove border-b and adjust styling:
+<div className="fixed top-0 left-0 right-0 z-30 bg-white">
+  <div className="py-2 px-3 w-full">
+    <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
+      {/* Left side - Back button */}
+      <button onClick={handleBack} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+        <ChevronLeft className="w-5 h-5 text-gray-800" />
+      </button>
 
-            {/* Center - Title */}
-            <h1 className="text-sm font-medium text-gray-800 mx-4">
-              Product Description
-            </h1>
+      {/* Center - Title */}
+      <h1 className="text-sm font-medium text-gray-800 mx-4">
+        Product Description
+      </h1>
 
-            {/* Right side - Help button */}
-            <button 
-              onClick={handleHelp}
-              className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <HelpCircle className="w-5 h-5 text-gray-800" />
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Right side - Help button */}
+      <button onClick={handleHelp} className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+        <HelpCircle className="w-5 h-5 text-gray-800" />
+      </button>
+    </div>
+  </div>
+</div>
 
       {/* Controls Panel */}
       {showControls && (
